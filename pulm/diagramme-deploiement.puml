@@ -1,0 +1,107 @@
+
+# ╔══════════════════════════════════════════════════════════╗
+# ║ 10. PlantUML — Diagramme de déploiement                 ║
+# ╚══════════════════════════════════════════════════════════╝
+
+---PLANTUML_DEPLOIEMENT---
+@startuml Deploiement_CinesDelices
+
+skinparam backgroundColor #F6F1E8
+skinparam nodeBackgroundColor #FFFBEF
+skinparam nodeBorderColor #C9A45C
+skinparam nodeFontColor #1F1D1E
+skinparam nodeFontStyle bold
+skinparam databaseBackgroundColor #FFFBEF
+skinparam databaseBorderColor #C9A45C
+skinparam artifactBackgroundColor #F6F1E8
+skinparam artifactBorderColor #4A3428
+skinparam arrowColor #8E1F2F
+skinparam packageBorderColor #4A3428
+skinparam packageBackgroundColor #F6F1E8
+skinparam cloudBackgroundColor #E8F4F8
+skinparam cloudBorderColor #3A8A9A
+
+title Diagramme de Deploiement -- Cines Delices
+
+' ── Poste developpeur ─────────────────────────────────────
+node "Poste Developpeur" <<machine locale>> {
+
+  package "Docker Compose" {
+    node "Container : api\n(node:24-alpine)" <<Docker>> {
+      artifact "Node.js 24\nExpress 5\nPrisma 7" as API_ART
+    }
+
+    node "Container : client\n(node:24-alpine)" <<Docker>> {
+      artifact "React 19\nVite 6\nSCSS" as CLIENT_ART
+    }
+
+    node "Container : db\n(postgres:18-alpine)" <<Docker>> {
+      database "PostgreSQL 18\ncinesdelices" as DB_LOCAL
+    }
+  }
+
+  note right of API_ART
+    http://localhost:3000
+    Swagger : /api-docs
+    Health  : /api/health
+  end note
+
+  note right of CLIENT_ART
+    http://localhost:5173
+    HMR Vite actif
+  end note
+}
+
+' ── GitHub ────────────────────────────────────────────────
+node "GitHub" <<depot distant>> {
+  artifact "Repository\ncines-delices\n(main + develop\n+ feature/*)" as REPO
+}
+
+' ── Railway Production ────────────────────────────────────
+node "Railway" <<PaaS cloud>> {
+
+  node "Service : API" <<Railway Service>> {
+    artifact "Node.js 24\nExpress 5\nPrisma 7\n(build prod)" as API_PROD
+  }
+
+  node "Service : PostgreSQL" <<Railway Service>> {
+    database "PostgreSQL 18\n(Railway DB)\nVariables env\nsecurisees" as DB_PROD
+  }
+
+  note right of API_PROD
+    https://cines-delices.railway.app
+    Variables d'env :
+    DATABASE_URL
+    JWT_SECRET
+    TMDB_API_KEY
+    SMTP_*
+  end note
+}
+
+' ── TMDB API externe ──────────────────────────────────────
+cloud "TMDB API\n(externe)" <<api.themoviedb.org>> {
+  artifact "REST API v3\n/search/multi\n/movie/:id\n/tv/:id" as TMDB
+}
+
+' ── Navigateur utilisateur ────────────────────────────────
+node "Navigateur\nUtilisateur" <<client>> {
+  artifact "SPA React 19\n(fichiers statiques\nservis par Railway)" as SPA
+}
+
+' ── Relations developpement ───────────────────────────────
+API_ART    --> DB_LOCAL   : Prisma ORM\n(SQL/TCP)
+CLIENT_ART --> API_ART    : HTTP/JSON\nlocalhost:3000
+
+' ── CI/CD ─────────────────────────────────────────────────
+REPO --> API_PROD  : push GitHub\n→ webhook Railway\n(deploy auto)
+
+' ── Relations production ─────────────────────────────────
+API_PROD --> DB_PROD  : Prisma ORM\n(SSL/TCP)
+API_PROD --> TMDB     : HTTPS GET\n(node-cache TTL)
+SPA      --> API_PROD : HTTPS/JSON\nBearer JWT
+
+' ── Dev vers GitHub ──────────────────────────────────────
+API_ART    --> REPO : git push\nfeature/* -> develop -> main
+CLIENT_ART --> REPO : git push
+
+@enduml

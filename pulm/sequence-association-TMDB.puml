@@ -1,0 +1,63 @@
+# ╔══════════════════════════════════════════════════════════╗
+# ║  6. PlantUML — Séquence : Association TMDB               ║
+# ╚══════════════════════════════════════════════════════════╝
+
+---PLANTUML_SEQ_TMDB---
+@startuml Sequence_TMDB
+skinparam backgroundColor #F6F1E8
+skinparam sequenceArrowColor #8E1F2F
+skinparam sequenceLifeLineBorderColor #4A3428
+skinparam sequenceParticipantBorderColor #C9A45C
+skinparam sequenceParticipantBackgroundColor #FFFBEF
+skinparam noteBackgroundColor #FFFBEF
+skinparam noteBorderColor #C9A45C
+title Séquence — Association film/série via TMDB
+
+actor "Membre" as U
+participant "React 19\n(Formulaire)" as F
+participant "Express 5\n(TMDBController)" as API
+participant "node-cache\n(Cache mémoire)" as CACHE
+participant "API TMDB\n(externe)" as TMDB
+participant "Sharp\n(PosterService)" as SHARP
+database "PostgreSQL 18\n(Prisma 7)" as DB
+
+== 1. Saisie dans le champ autocomplétion ==
+U -> F : Tape "Ratatouille"
+F -> F : Debounce 400ms
+
+== 2. Recherche TMDB avec cache ==
+F -> API : GET /api/tmdb/medias/search?q=ratatouille\nBearer JWT
+API -> CACHE : get("search:ratatouille")
+alt Cache hit
+  CACHE --> API : résultats en cache
+else Cache miss
+  API -> TMDB : GET /search/multi?query=ratatouille
+  TMDB --> API : résultats (films + séries)
+  API -> CACHE : set("search:ratatouille", résultats, TTL)
+end
+API --> F : [{ tmdbId, titre, annee, type, posterPath }]
+F --> U : Liste déroulante de résultats
+
+== 3. Sélection d'un média ==
+U -> F : Sélectionne "Ratatouille (2007) — MOVIE"
+F -> API : GET /api/tmdb/medias/MOVIE/2062\nBearer JWT
+API -> DB : SELECT * FROM media\nWHERE tmdb_id=2062 AND type='MOVIE'
+
+alt Média déjà en base
+  DB --> API : media { id: "uuid-existant" }
+else Nouveau média
+  API -> TMDB : GET /movie/2062 + /movie/2062/credits
+  TMDB --> API : détails complets
+  API -> SHARP : downloadAndCachePoster("/path/poster.jpg")
+  SHARP --> API : "/public/posters/ratatouille-2007.webp"
+  API -> DB : INSERT INTO media\n{ tmdbId, titre, slug, type,\n  posterUrl, synopsis, annee, realisateur }
+  DB --> API : media { id: "uuid-nouveau" }
+  API -> DB : INSERT INTO media_genres\npour chaque genre TMDB
+end
+
+== 4. Retour au formulaire ==
+API --> F : { media: { id, titre, posterUrl, annee } }
+F --> U : Affiche affiche + titre dans le formulaire\nmediaId mémorisé pour la soumission
+@enduml
+
+---FIN_PLANTUML_SEQ_TMDB---

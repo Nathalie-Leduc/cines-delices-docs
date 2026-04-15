@@ -1,0 +1,72 @@
+
+# ╔══════════════════════════════════════════════════════════╗
+# ║  4b. PlantUML — Use Cases Admin (UC20–UC25)              ║
+# ║  URL : https://www.plantuml.com/plantuml/uml/            ║
+# ╚══════════════════════════════════════════════════════════╝
+
+---PLANTUML_UC_ADMIN---
+@startuml UC_Admin
+skinparam backgroundColor #F6F1E8
+skinparam actorBorderColor #4A3428
+skinparam actorBackgroundColor #F6F1E8
+skinparam usecaseBorderColor #C9A45C
+skinparam usecaseBackgroundColor #FFFBEF
+skinparam arrowColor #8E1F2F
+skinparam packageBorderColor #4A3428
+skinparam noteBackgroundColor #FFFBEF
+skinparam noteBorderColor #C9A45C
+title Use Cases 3/3 — Administrateur · Cinés Délices
+
+actor "Membre\nConnecté" as M
+actor "Administrateur" as A
+M <|-- A
+
+rectangle "Droits Membre (hérités)" {
+  usecase "Créer, modifier,\nsoumettre ses propres recettes" as UCM
+}
+M --> UCM
+
+rectangle "Back-Office Admin (JWT + rôle ADMIN)" {
+  usecase "UC20\nValider les recettes\nPENDING" as UC20
+  usecase "UC21\nGérer toutes\nles recettes" as UC21
+  usecase "UC22\nValider les ingrédients\nen attente" as UC22
+  usecase "UC23\nGérer les catégories" as UC23
+  usecase "UC24\nGérer les utilisateurs" as UC24
+  usecase "UC25\nGérer les notifications\nadmin" as UC25
+}
+
+A --> UC20
+A --> UC21
+A --> UC22
+A --> UC23
+A --> UC24
+A --> UC25
+
+UC20 .> UC21 : <<include>>\n(accès liste d'abord)
+
+note right of UC20
+  PATCH .../publish → PUBLISHED
+  PATCH .../reject  → DRAFT + motif
+end note
+
+note right of UC22
+  PATCH .../approve
+  POST  .../merge (doublons)
+  onDelete: RESTRICT si utilisé
+end note
+
+note right of UC23
+  CRUD complet
+  DELETE bloqué si recettes liées
+  (onDelete: RESTRICT en BDD)
+end note
+
+note bottom of A
+  Double middleware :
+  authMiddleware (JWT valide)
+  adminMiddleware (role = ADMIN)
+  → 403 Forbidden sinon
+end note
+@enduml
+
+---FIN_PLANTUML_UC_ADMIN---

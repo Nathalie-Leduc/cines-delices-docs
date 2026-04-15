@@ -1,0 +1,47 @@
+# ╔══════════════════════════════════════════════════════════╗
+# ║  9. PlantUML — Diagramme d'activité                      ║
+# ╚══════════════════════════════════════════════════════════╝
+
+---PLANTUML_ACTIVITE---
+@startuml Activite_Publication
+skinparam backgroundColor #F6F1E8
+skinparam activityBackgroundColor #FFFBEF
+skinparam activityBorderColor #C9A45C
+skinparam arrowColor #8E1F2F
+title Activité — Workflow de publication d'une recette
+
+|Membre|
+start
+:Remplit le formulaire de création\n(titre, catégorie, film, ingrédients, photo);
+if (Champs valides ?) then (oui)
+  :POST /api/recipes → status = DRAFT;
+  :Recette enregistrée en brouillon;
+  if (Soumet maintenant ?) then (oui)
+    :PATCH .../submit → DRAFT à PENDING;
+  else (plus tard)
+    :Reste en DRAFT, modifiable;
+    stop
+  endif
+else (non)
+  :Zod retourne les erreurs;
+  stop
+endif
+
+|Admin|
+:Reçoit notification RECIPE_SUBMITTED\n(badge dans sidebar);
+:Consulte la recette PENDING\n(titre, ingrédients, photo, film associé);
+if (Conforme aux règles ?) then (oui)
+  :PATCH .../publish → PUBLISHED;
+  :Recette visible dans le catalogue;
+  |Membre|
+  :Notification "Publiée" (optionnel);
+else (non)
+  :PATCH .../reject + rejectionReason;
+  :Recette repasse en DRAFT;
+  |Membre|
+  :Peut corriger et resoumettre;
+endif
+stop
+@enduml
+
+---FIN_PLANTUML_ACTIVITE---

@@ -1,0 +1,230 @@
+# ╔══════════════════════════════════════════════════════════╗
+# ║  7. PlantUML — Diagramme de classes                      ║
+# ╚══════════════════════════════════════════════════════════╝
+
+---PLANTUML_CLASSES---
+@startuml Classes_CinesDelices
+
+skinparam backgroundColor #F6F1E8
+skinparam classBackgroundColor #FFFBEF
+skinparam classBorderColor #C9A45C
+skinparam classHeaderBackgroundColor #d4eb9e
+skinparam classFontColor #1F1D1E
+skinparam classStereotypeFontColor #d1273e
+skinparam arrowColor #8E1F2F
+skinparam packageBorderColor #d4eb9e
+skinparam packageBackgroundColor #F6F1E8
+
+title Diagramme de Classes -- Cines Delices (cote serveur)
+
+' ── Enums ─────────────────────────────────────────────────
+enum Role {
+  MEMBER
+  ADMIN
+}
+
+enum RecipeStatus {
+  DRAFT
+  PENDING
+  PUBLISHED
+}
+
+enum MediaType {
+  MOVIE
+  SERIES
+}
+
+enum NotificationType {
+  RECIPE_SUBMITTED
+}
+
+' ── Modeles Prisma ────────────────────────────────────────
+class User <<model>> {
+  + id : String
+  + email : String
+  + pseudo : String
+  + nom : String
+  - passwordHash : String
+  + role : Role
+  + createdAt : DateTime
+  + lastLoginAt : DateTime
+  + resetToken : String
+  + resetTokenExpires : DateTime
+}
+
+class Category <<model>> {
+  + id : String
+  + nom : String
+  + description : String
+  + color : String
+}
+
+class Genre <<model>> {
+  + id : String
+  + nom : String
+  + tmdbGenreId : Int
+}
+
+class Media <<model>> {
+  + id : String
+  + tmdbId : Int
+  + titre : String
+  + slug : String
+  + type : MediaType
+  + posterUrl : String
+  + synopsis : String
+  + annee : Int
+  + realisateur : String
+}
+
+class Recipe <<model>> {
+  + id : String
+  + titre : String
+  + slug : String
+  + imageURL : String
+  + instructions : String
+  + nombrePersonnes : Int
+  + tempsPreparation : Int
+  + tempsCuisson : Int
+  + status : RecipeStatus
+  + rejectionReason : String
+  + adminEditedSinceSubmission : Boolean
+  + adminEditedIngredientsSinceSubmission : Boolean
+  + adminEditedFieldsSummary : String
+  + userId : String
+  + categoryId : String
+  + mediaId : String
+}
+
+class Ingredient <<model>> {
+  + id : String
+  + nom : String
+  + approved : Boolean
+}
+
+class RecipeIngredient <<model>> {
+  + recipeId : String
+  + ingredientId : String
+  + quantity : String
+  + unit : String
+}
+
+class Notification <<model>> {
+  + id : String
+  + type : NotificationType
+  + message : String
+  + isRead : Boolean
+  + userId : String
+  + recipeId : String
+}
+
+' ── Controllers ──────────────────────────────────────────
+class AuthController <<controller>> {
+  + register(req, res)
+  + login(req, res)
+  + logout(req, res)
+  + forgotPassword(req, res)
+  + resetPassword(req, res)
+}
+
+class UserController <<controller>> {
+  + getMe(req, res)
+  + updateMe(req, res)
+  + updatePassword(req, res)
+  + deleteMe(req, res)
+  + getMyNotifications(req, res)
+  + markNotificationRead(req, res)
+  + deleteNotification(req, res)
+}
+
+class RecipesController <<controller>> {
+  + getAllPublished(req, res)
+  + getOne(req, res)
+  + getMyRecipes(req, res)
+  + create(req, res)
+  + update(req, res)
+  + submit(req, res)
+  + delete(req, res)
+}
+
+class AdminController <<controller>> {
+  + getAllRecipes(req, res)
+  + getPending(req, res)
+  + publish(req, res)
+  + reject(req, res)
+  + adminDelete(req, res)
+  + getUsers(req, res)
+  + updateRole(req, res)
+  + deleteUser(req, res)
+  + getIngredients(req, res)
+  + approve(req, res)
+  + merge(req, res)
+}
+
+class TMDBController <<controller>> {
+  + search(req, res)
+  + getById(req, res)
+}
+
+class MediaController <<controller>> {
+  + getMovies(req, res)
+  + getMovieBySlug(req, res)
+  + getSeries(req, res)
+  + getSeriesBySlug(req, res)
+}
+
+' ── Middlewares ───────────────────────────────────────────
+class AuthMiddleware <<middleware>> {
+  + authMiddleware(req, res, next)
+}
+
+class AdminMiddleware <<middleware>> {
+  + adminMiddleware(req, res, next)
+}
+
+' ── Services ──────────────────────────────────────────────
+class PosterService <<service>> {
+  + downloadAndCachePoster(path) : String
+}
+
+class TMDBCache <<service>> {
+  + search(query) : Object[]
+  + getById(type, id) : Object
+}
+
+class InactivityJob <<job>> {
+  + run() : void
+}
+
+' ── Relations modeles ─────────────────────────────────────
+User       "1" *-- "0..*" Recipe           : cree (SetNull)
+Category   "1" *-- "0..*" Recipe           : classifie (Restrict)
+Media      "1" *-- "0..*" Recipe           : inspire (Restrict)
+Recipe     "1" *-- "0..*" RecipeIngredient : contient (Cascade)
+Ingredient "1" *-- "0..*" RecipeIngredient : utilise (Restrict)
+Media      "0..*" -- "0..*" Genre          : via MediaGenre
+User       "1" *-- "0..*" Notification     : recoit (Cascade)
+Recipe     "0..1" *-- "0..*" Notification  : liee (SetNull)
+
+' ── Relations enums ───────────────────────────────────────
+User         ..> Role
+Recipe       ..> RecipeStatus
+Media        ..> MediaType
+Notification ..> NotificationType
+
+' ── Relations controllers ─────────────────────────────────
+AuthController    ..> User         : uses
+UserController    ..> User         : uses
+UserController    ..> Notification : uses
+RecipesController ..> Recipe       : uses
+RecipesController ..> AuthMiddleware : depends
+AdminController   ..> Recipe       : uses
+AdminController   ..> Ingredient   : uses
+AdminController   ..> AdminMiddleware : depends
+TMDBController    ..> TMDBCache    : uses
+TMDBCache         ..> PosterService : uses
+InactivityJob     ..> User         : uses
+
+@enduml
+
+---FIN_PLANTUML_CLASSES---
