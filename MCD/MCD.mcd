@@ -1,0 +1,27 @@
+GENRE: identifiant_TMDB_genre, nom
+POSSÉDER, 0N MÉDIA, 0N GENRE
+:
+:
+:
+:
+
+:
+MÉDIA: identifiant_TMDB, titre, type, slug, affiche, synopsis, année, réalisateur
+ÊTRE_ASSOCIÉE, 0N RECETTE, 11 MÉDIA
+:
+:
+:
+
+INGRÉDIENT: nom, approuvé
+CONTENIR, 1N RECETTE, 0N INGRÉDIENT: quantité, unité
+RECETTE: titre, slug, statut, motif_refus, nombre_personnes, temps_préparation, temps_cuisson, photo
+CRÉER, 0N UTILISATEUR, 11 RECETTE
+UTILISATEUR: email, pseudo, nom, rôle, dernière_connexion
+:
+
+:
+CATÉGORIE: nom, description, couleur
+APPARTENIR, 11 RECETTE, 0N CATÉGORIE
+:
+RECEVOIR, 0N UTILISATEUR, 11 NOTIFICATION
+NOTIFICATION: type, message, lu

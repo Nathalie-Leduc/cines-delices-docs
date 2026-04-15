@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maquettes — Cinés Délices</title>
+<style>
+/* ── Charte graphique Cinés Délices ── */
+:root {
+  --or: #C9A45C;
+  --rouge: #8E1F2F;
+  --noir: #1F1D1E;
+  --creme: #F6F1E8;
+  --brun: #4A3428;
+  --vert: #6E8B5B;
+  --teal: #3A8A9A;
+  --gris: #888780;
+  --grisL: #F0EDE8;
+  --grisM: #DEDBD5;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: Georgia, serif; background: #E8E4DC; color: var(--noir); }
+
+/* ── Navigation du document ── */
+.doc-nav {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--noir); border-bottom: 2px solid var(--or);
+  padding: 0 24px; display: flex; align-items: center; gap: 0; overflow-x: auto;
+}
+.doc-nav a {
+  display: block; padding: 14px 16px; color: #aaa; font-size: 11px;
+  font-family: sans-serif; text-decoration: none; white-space: nowrap;
+  border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color 0.2s;
+}
+.doc-nav a:hover { color: var(--or); }
+.doc-nav-logo {
+  font-size: 13px; color: var(--or); font-style: italic;
+  padding: 14px 20px 14px 0; border-right: 1px solid #333; margin-right: 8px;
+  white-space: nowrap;
+}
+
+/* ── Layout général ── */
+.page-section {
+  padding: 40px 24px;
+  border-bottom: 1px solid #CDC9BF;
+}
+.page-section:last-child { border-bottom: none; }
+
+.section-header {
+  display: flex; align-items: baseline; gap: 12px; margin-bottom: 24px;
+}
+.section-num {
+  font-size: 11px; font-family: sans-serif; font-weight: bold;
+  color: var(--or); background: var(--brun); padding: 3px 8px;
+  border-radius: 3px; letter-spacing: 0.08em;
+}
+.section-name {
+  font-size: 20px; color: var(--brun);
+}
+.section-route {
+  font-size: 12px; font-family: monospace; color: var(--gris);
+  background: white; padding: 2px 8px; border-radius: 3px;
+  border: 1px solid var(--grisM);
+}
+
+.duo {
+  display: grid; grid-template-columns: 3fr 1.3fr; gap: 28px; align-items: start;
+}
+
+/* ── Écrans ── */
+.screen-wrap { position: relative; }
+.screen-label {
+  font-size: 10px; font-family: sans-serif; color: var(--gris);
+  text-align: center; padding: 6px 0 0; letter-spacing: 0.05em;
+}
+.screen {
+  background: var(--creme); border: 1px solid #C8C0B0;
+  border-radius: 8px; overflow: hidden; font-family: Georgia, serif;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+}
+
+/* ── Navbar ── */
+.navbar {
+  background: var(--noir); padding: 0 20px; height: 52px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.navbar-mobile { height: 44px; padding: 0 14px; }
+.logo-wrap { display: flex; align-items: center; gap: 8px; }
+.logo-icon {
+  width: 26px; height: 18px; background: var(--or);
+  clip-path: polygon(0 0,70% 0,100% 50%,70% 100%,0 100%,15% 50%);
+  flex-shrink: 0;
+}
+.logo-text { font-size: 14px; color: var(--or); font-style: italic; letter-spacing: 0.02em; }
+.logo-text-sm { font-size: 12px; }
+.nav-links { display: flex; gap: 16px; align-items: center; }
+.nav-link { color: #bbb; font-size: 11px; font-family: sans-serif; }
+.nav-btn { background: var(--or); color: var(--noir); font-size: 10px; font-family: sans-serif; font-weight: bold; padding: 5px 12px; border-radius: 4px; }
+.nav-btn-out { border: 1px solid var(--or); color: var(--or); font-size: 10px; font-family: sans-serif; padding: 4px 11px; border-radius: 4px; }
+.nav-ham { color: var(--or); font-size: 18px; font-family: sans-serif; }
+.avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--or); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; color: var(--noir); font-family: sans-serif; flex-shrink: 0; }
+.avatar-rouge { background: var(--rouge); color: white; }
+
+/* ── Hero ── */
+.hero {
+  background: linear-gradient(135deg, #2C1810 0%, #1F1D1E 60%, #4A2030 100%);
+  padding: 36px 28px; text-align: center; position: relative;
+}
+.hero-sm { padding: 22px 16px; }
+.hero-badge {
+  display: inline-block; background: rgba(201,164,92,0.2);
+  border: 1px solid var(--or); color: var(--or); font-size: 9px;
+  font-family: sans-serif; letter-spacing: 0.12em; padding: 3px 12px;
+  border-radius: 20px; margin-bottom: 12px;
+}
+.hero h1 { color: var(--or); font-size: 26px; line-height: 1.25; margin-bottom: 8px; }
+.hero-sm h1 { font-size: 18px; }
+.hero p { color: #bbb; font-size: 12px; font-family: sans-serif; margin-bottom: 18px; }
+.hero p.sm { font-size: 10px; margin-bottom: 14px; }
+.hero-cta { display: inline-block; background: var(--or); color: var(--noir); font-size: 11px; font-family: sans-serif; font-weight: bold; padding: 9px 22px; border-radius: 4px; }
+.hero-cta-sm { font-size: 10px; padding: 7px 16px; }
+.film-strip { position: absolute; bottom: 0; left: 0; right: 0; height: 8px; background: repeating-linear-gradient(90deg, #000 0, #000 10px, rgba(201,164,92,0.5) 10px, rgba(201,164,92,0.5) 20px); }
+
+/* ── Section interne ── */
+.sec-title {
+  font-size: 14px; font-weight: bold; color: var(--brun); font-family: sans-serif;
+  padding: 14px 20px 8px; display: flex; align-items: center; gap: 8px;
+}
+.sec-title::after { content:''; flex:1; height:1px; background:var(--or); opacity:.4; }
+.sec-title-sm { font-size: 12px; padding: 10px 12px 6px; }
+
+/* ── Search ── */
+.search-bar {
+  display: flex; align-items: center; gap: 8px; background: white;
+  border: 1px solid #ccc; border-radius: 6px; padding: 8px 14px;
+  margin: 14px 20px 6px;
+}
+.search-bar-sm { margin: 8px 12px 5px; padding: 6px 10px; }
+.search-icon { color: var(--gris); font-size: 13px; font-family: sans-serif; }
+.search-placeholder { color: #aaa; font-size: 11px; font-family: sans-serif; flex: 1; }
+.search-placeholder-sm { font-size: 10px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; padding: 0 20px 10px; }
+.chips-sm { padding: 0 12px 8px; gap: 4px; }
+.chip { font-size: 10px; font-family: sans-serif; padding: 4px 10px; border-radius: 20px; border: 1px solid #ccc; background: white; color: #666; }
+.chip-sm { font-size: 9px; padding: 3px 8px; }
+.chip.on { background: var(--or); border-color: var(--or); color: var(--noir); font-weight: bold; }
+
+/* ── Grilles cartes ── */
+.grid4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; padding: 0 20px 14px; }
+.grid3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; padding: 0 20px 14px; }
+.grid2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; padding: 0 12px 12px; }
+
+.rcard { background: white; border-radius: 8px; overflow: hidden; border: 1px solid #E0D8CC; }
+.rcard-img { height: 80px; display: flex; align-items: center; justify-content: center; font-size: 22px; position: relative; }
+.rcard-img-sm { height: 60px; font-size: 18px; }
+.badge {
+  position: absolute; top: 6px; right: 6px;
+  font-size: 9px; font-family: sans-serif; font-weight: bold;
+  padding: 2px 6px; border-radius: 3px;
+}
+.badge-plat { background:#C9A45C22; color:#8B6914; border:1px solid #C9A45C; }
+.badge-dessert { background:#8E1F2F22; color:#8E1F2F; border:1px solid #8E1F2F; }
+.badge-entree { background:#6E8B5B22; color:#3D5C2A; border:1px solid #6E8B5B; }
+.badge-boisson { background:#3A8A9A22; color:#1F5A66; border:1px solid #3A8A9A; }
+.rcard-body { padding: 8px 10px 10px; }
+.rcard-body-sm { padding: 6px 8px 8px; }
+.rcard-title { font-size: 11px; font-weight: bold; color: var(--noir); margin-bottom: 4px; line-height: 1.3; }
+.rcard-title-sm { font-size: 10px; }
+.rcard-film { font-size: 10px; color: var(--gris); font-family: sans-serif; display: flex; align-items: center; gap: 4px; }
+.rcard-film-sm { font-size: 9px; }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--or); flex-shrink: 0; }
+
+/* ── Pagination ── */
+.pagination { display: flex; justify-content: center; gap: 5px; padding: 10px 0 14px; }
+.pg { font-size: 10px; font-family: sans-serif; padding: 4px 8px; border-radius: 3px; }
+.pg.on { background: var(--or); color: var(--noir); font-weight: bold; }
+.pg.off { border: 1px solid #ccc; color: #666; }
+.pg.nav { border: 1px solid #ccc; color: var(--teal); }
+
+/* ── Détail recette ── */
+.detail-split { display: grid; grid-template-columns: 1fr 1fr; }
+.detail-img { height: 200px; display: flex; align-items: center; justify-content: center; font-size: 52px; }
+.detail-info { padding: 18px; background: white; }
+.detail-title { font-size: 17px; color: var(--brun); margin-bottom: 8px; line-height: 1.3; }
+.detail-meta { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.meta { font-size: 10px; font-family: sans-serif; color: var(--gris); display: flex; align-items: center; gap: 3px; }
+.film-chip { display: flex; align-items: center; gap: 10px; background: var(--grisL); border-radius: 6px; padding: 8px 12px; border: 1px solid #D4C9B8; }
+.film-poster { width: 30px; height: 42px; border-radius: 3px; background: var(--brun); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.film-info strong { display: block; font-size: 11px; font-family: sans-serif; color: var(--noir); }
+.film-info span { font-size: 10px; color: var(--gris); font-family: sans-serif; }
+.anecdote { margin-top: 10px; padding: 9px 12px; background: #FFFBEF; border-left: 3px solid var(--or); border-radius: 0 4px 4px 0; font-size: 10px; font-family: sans-serif; color: #555; line-height: 1.5; font-style: italic; }
+.ingr-instr { display: grid; grid-template-columns: 1fr 1fr; }
+.ingr-col { padding: 14px 20px; border-top: 1px solid #E0D8CC; }
+.instr-col { padding: 14px 20px; background: white; border-top: 1px solid #E0D8CC; }
+.sub-title { font-size: 12px; font-family: sans-serif; font-weight: bold; color: var(--brun); margin-bottom: 10px; }
+.ingr-row { font-size: 11px; font-family: sans-serif; color: #444; padding: 4px 0; border-bottom: 1px dashed #E0D8CC; display: flex; justify-content: space-between; }
+.ingr-row span { color: var(--gris); }
+.step { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start; }
+.step-n { width: 20px; height: 20px; border-radius: 50%; background: var(--or); color: var(--noir); font-size: 10px; font-family: sans-serif; font-weight: bold; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.step-t { font-size: 11px; font-family: sans-serif; color: #444; line-height: 1.5; }
+
+/* ── Auth ── */
+.auth-split { display: grid; grid-template-columns: 1fr 1fr; min-height: 280px; }
+.auth-pane { display: flex; align-items: center; justify-content: center; padding: 24px; }
+.auth-card { background: white; border-radius: 10px; border: 1px solid #D4C9B8; padding: 24px; width: 100%; max-width: 270px; }
+.auth-logo-t { text-align: center; font-size: 16px; color: var(--or); font-style: italic; margin-bottom: 14px; }
+.auth-title { font-size: 12px; font-family: sans-serif; font-weight: bold; color: var(--brun); text-align: center; margin-bottom: 14px; letter-spacing: 0.06em; text-transform: uppercase; }
+.fg { margin-bottom: 11px; }
+.fl { font-size: 10px; font-family: sans-serif; color: var(--gris); margin-bottom: 3px; display: block; }
+.fi { width: 100%; border: 1px solid #D4C9B8; border-radius: 4px; padding: 6px 9px; font-size: 11px; font-family: sans-serif; color: #333; background: var(--creme); }
+.btn-p { width: 100%; background: var(--or); color: var(--noir); border: none; border-radius: 4px; padding: 9px; font-size: 11px; font-family: sans-serif; font-weight: bold; cursor: pointer; margin-top: 4px; }
+.auth-links { text-align: center; margin-top: 10px; font-size: 10px; font-family: sans-serif; color: var(--gris); }
+.auth-link { color: var(--teal); }
+
+/* ── Layout membre/admin ── */
+.workspace { display: grid; grid-template-columns: 190px 1fr; min-height: 320px; }
+.sidebar { padding: 16px; }
+.sb-dark { background: var(--brun); }
+.sb-black { background: #1a1818; }
+.sb-user { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.12); }
+.sb-name { font-size: 11px; color: white; font-family: sans-serif; font-weight: bold; }
+.sb-role { font-size: 9px; color: rgba(255,255,255,0.45); font-family: sans-serif; }
+.sb-nav { list-style: none; }
+.sb-nav li { padding: 7px 8px; font-size: 11px; font-family: sans-serif; color: rgba(255,255,255,0.65); border-radius: 4px; margin-bottom: 2px; display: flex; align-items: center; gap: 6px; cursor: default; }
+.sb-nav li.on { background: rgba(201,164,92,0.22); color: var(--or); }
+.sb-nav li.on-rouge { background: rgba(142,31,47,0.35); color: #E06070; }
+.notif-badge { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; background: var(--rouge); color: white; border-radius: 50%; font-size: 9px; font-family: sans-serif; margin-left: auto; }
+.notif-badge-g { background: #666; }
+.sb-btn { display: block; background: var(--or); color: var(--noir); text-align: center; padding: 8px; border-radius: 5px; font-size: 10px; font-family: sans-serif; font-weight: bold; margin-top: 16px; }
+.content { padding: 16px; background: var(--creme); }
+.c-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.c-title { font-size: 14px; color: var(--brun); font-weight: bold; font-family: sans-serif; }
+.btn-sm-or { background: var(--or); color: var(--noir); font-size: 10px; font-family: sans-serif; font-weight: bold; padding: 5px 12px; border-radius: 4px; border: none; cursor: pointer; }
+.tabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+.tab { font-size: 10px; font-family: sans-serif; padding: 4px 10px; border-radius: 4px; border: 1px solid #D4C9B8; background: white; color: #666; }
+.tab.on { background: var(--brun); color: white; border-color: var(--brun); }
+
+/* ── Ligne recette membre ── */
+.rrow { background: white; border-radius: 6px; border: 1px solid #E0D8CC; padding: 10px 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rrow-img { width: 38px; height: 38px; border-radius: 4px; background: var(--grisL); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.rrow-info { flex: 1; min-width: 0; }
+.rrow-title { font-size: 11px; font-weight: bold; color: var(--noir); font-family: sans-serif; }
+.rrow-sub { font-size: 10px; color: var(--gris); font-family: sans-serif; }
+.rrow-acts { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+.pill { font-size: 9px; font-family: sans-serif; font-weight: bold; padding: 3px 8px; border-radius: 3px; }
+.pill-pub { background:#6E8B5B22; color:#3D5C2A; border:1px solid #6E8B5B; }
+.pill-pend { background:#C9A45C22; color:#8B6914; border:1px solid #C9A45C; }
+.pill-draft { background:#f0f0f0; color:#666; }
+.act-btn { font-size: 9px; font-family: sans-serif; padding: 3px 8px; border-radius: 3px; border: 1px solid #ccc; background: white; color: #555; cursor: pointer; }
+.act-btn-teal { border-color: var(--teal); color: var(--teal); }
+.act-btn-rouge { border-color: var(--rouge); color: var(--rouge); }
+
+/* ── Formulaire recette ── */
+.form-split { display: grid; grid-template-columns: 1fr 1fr; }
+.form-col { padding: 16px; }
+.form-col:first-child { border-right: 1px solid #E0D8CC; }
+.fs-title { font-size: 11px; font-family: sans-serif; font-weight: bold; color: var(--brun); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #E0D8CC; }
+.fg-sm { margin-bottom: 10px; }
+.fl-sm { font-size: 9px; font-family: sans-serif; color: var(--gris); margin-bottom: 3px; display: block; }
+.fi-sm { width: 100%; border: 1px solid #D4C9B8; border-radius: 4px; padding: 5px 8px; font-size: 10px; font-family: sans-serif; color: #333; background: var(--creme); }
+.fsel { width: 100%; border: 1px solid #D4C9B8; border-radius: 4px; padding: 5px 8px; font-size: 10px; font-family: sans-serif; background: var(--creme); color: #333; }
+.tmdb-res { display: flex; align-items: center; gap: 8px; background: white; border: 1px solid var(--or); border-radius: 5px; padding: 6px 8px; margin-top: 5px; }
+.tmdb-p { width: 20px; height: 28px; background: var(--brun); border-radius: 2px; display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; }
+.tmdb-n { font-size: 10px; font-family: sans-serif; font-weight: bold; color: var(--brun); }
+.tmdb-y { font-size: 9px; color: var(--vert); font-family: sans-serif; }
+.upload-z { border: 1.5px dashed var(--or); border-radius: 6px; padding: 18px; text-align: center; background: #FFFBEF; }
+.upload-ic { font-size: 22px; margin-bottom: 6px; }
+.upload-t { font-size: 10px; font-family: sans-serif; color: var(--gris); line-height: 1.6; }
+.ingr-row-f { display: grid; grid-template-columns: 1fr 50px 60px 22px; gap: 4px; margin-bottom: 5px; align-items: center; }
+.del-ic { color: var(--rouge); font-size: 13px; text-align: center; cursor: pointer; font-family: sans-serif; }
+.add-link { font-size: 10px; font-family: sans-serif; color: var(--teal); cursor: pointer; margin-top: 4px; }
+.ftarea { width: 100%; border: 1px solid #D4C9B8; border-radius: 4px; padding: 6px 8px; font-size: 10px; font-family: sans-serif; background: var(--creme); color: #333; height: 70px; resize: none; }
+.form-acts { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid #E0D8CC; background: var(--grisL); }
+.btn-sec { flex: 1; border: 1px solid var(--or); color: var(--brun); background: white; border-radius: 4px; padding: 8px; font-size: 10px; font-family: sans-serif; text-align: center; cursor: pointer; }
+.btn-prim { flex: 1; background: var(--or); color: var(--noir); border: none; border-radius: 4px; padding: 8px; font-size: 10px; font-family: sans-serif; font-weight: bold; text-align: center; cursor: pointer; }
+
+/* ── Admin cards ── */
+.admin-card { background: white; border-radius: 6px; border: 1px solid #E0D8CC; border-left: 3px solid var(--or); padding: 12px 14px; margin-bottom: 8px; }
+.admin-card-hd { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.admin-card-title { font-size: 12px; font-weight: bold; color: var(--noir); font-family: sans-serif; }
+.admin-card-meta { font-size: 10px; color: var(--gris); font-family: sans-serif; margin-top: 2px; }
+.admin-acts { display: flex; gap: 6px; flex-wrap: wrap; }
+.btn-pub { background: var(--vert); color: white; font-size: 10px; font-family: sans-serif; padding: 5px 10px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; }
+.btn-rej { background: var(--rouge); color: white; font-size: 10px; font-family: sans-serif; padding: 5px 10px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; }
+.btn-view { background: white; color: var(--teal); font-size: 10px; font-family: sans-serif; padding: 5px 10px; border-radius: 4px; border: 1px solid var(--teal); cursor: pointer; }
+
+/* ── Profil membre ── */
+.profile-card { background: white; border-radius: 8px; border: 1px solid #E0D8CC; padding: 20px; margin-bottom: 12px; }
+.profile-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid #E0D8CC; }
+.avatar-lg { width: 52px; height: 52px; border-radius: 50%; background: var(--or); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; color: var(--noir); font-family: sans-serif; }
+.profile-name { font-size: 15px; color: var(--brun); font-weight: bold; }
+.profile-email { font-size: 11px; font-family: sans-serif; color: var(--gris); }
+.profile-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }
+.stat-box { background: var(--grisL); border-radius: 6px; padding: 10px; text-align: center; }
+.stat-n { font-size: 20px; font-weight: bold; color: var(--or); font-family: sans-serif; }
+.stat-l { font-size: 10px; color: var(--gris); font-family: sans-serif; margin-top: 2px; }
+.profile-field { margin-bottom: 10px; }
+
+/* ── Notifications ── */
+.notif-item { display: flex; gap: 10px; align-items: flex-start; background: white; border-radius: 6px; border: 1px solid #E0D8CC; padding: 10px 12px; margin-bottom: 7px; }
+.notif-dot-or { width: 8px; height: 8px; border-radius: 50%; background: var(--or); flex-shrink: 0; margin-top: 3px; }
+.notif-dot-g { background: #ccc; }
+.notif-txt { font-size: 11px; font-family: sans-serif; color: var(--noir); line-height: 1.4; }
+.notif-time { font-size: 9px; color: var(--gris); font-family: sans-serif; margin-top: 3px; }
+
+/* ── Films/Séries page ── */
+.media-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 12px; padding: 0 20px 16px; }
+.media-grid-3 { grid-template-columns: repeat(3,1fr); }
+.media-grid-2 { grid-template-columns: repeat(2,1fr); padding: 0 12px 12px; gap: 8px; }
+.media-card { background: white; border-radius: 8px; overflow: hidden; border: 1px solid #E0D8CC; }
+.media-poster { height: 110px; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+.media-poster-sm { height: 80px; font-size: 20px; }
+.media-info { padding: 8px 10px 10px; }
+.media-title { font-size: 11px; font-weight: bold; color: var(--noir); font-family: sans-serif; line-height: 1.3; margin-bottom: 3px; }
+.media-sub { font-size: 10px; color: var(--gris); font-family: sans-serif; }
+.media-chip { display: inline-block; font-size: 9px; font-family: sans-serif; padding: 2px 6px; border-radius: 3px; margin-top: 4px; }
+.mc-movie { background:#C9A45C22; color:#8B6914; border:1px solid #C9A45C; }
+.mc-series { background:#3A8A9A22; color:#1F5A66; border:1px solid #3A8A9A; }
+
+/* ── Reset Password ── */
+.reset-info { font-size: 11px; font-family: sans-serif; color: var(--gris); text-align: center; margin-bottom: 14px; line-height: 1.6; }
+
+/* ── Contact ── */
+.contact-layout { display: grid; grid-template-columns: 1fr 1.5fr; gap: 0; }
+.contact-left { padding: 24px; background: var(--brun); color: white; }
+.contact-left h2 { font-size: 16px; color: var(--or); margin-bottom: 12px; }
+.contact-left p { font-size: 11px; font-family: sans-serif; color: rgba(255,255,255,0.7); line-height: 1.6; margin-bottom: 16px; }
+.contact-info { font-size: 11px; font-family: sans-serif; color: rgba(255,255,255,0.6); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+.contact-form { padding: 24px; background: white; }
+
+/* ── Mentions légales ── */
+.legal-content { padding: 24px; max-width: 800px; margin: 0 auto; }
+.legal-h2 { font-size: 14px; color: var(--rouge); font-family: sans-serif; font-weight: bold; margin: 16px 0 8px; }
+.legal-p { font-size: 11px; font-family: sans-serif; color: #444; line-height: 1.7; margin-bottom: 8px; }
+
+/* ── Footer ── */
+.footer { background: var(--noir); padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
+.footer-logo { font-size: 12px; color: var(--or); font-style: italic; }
+.footer-links { display: flex; gap: 14px; }
+.footer-link { font-size: 9px; color: #888; font-family: sans-serif; }
+.footer-sm { padding: 10px 12px; }
+
+/* ── Breadcrumb ── */
+.breadcrumb { padding: 8px 20px; font-size: 11px; font-family: sans-serif; color: var(--gris); border-bottom: 1px solid #E0D8CC; background: white; }
+.breadcrumb span { color: var(--brun); font-weight: bold; }
+</style>
+</head>
+<body>
+
+<!-- Navigation du document -->
+<nav class="doc-nav">
+  <div class="doc-nav-logo">Cinés Délices — Maquettes</div>
+  <a href="#p1">1. Accueil</a>
+  <a href="#p2">2. Catalogue</a>
+  <a href="#p3">3. Détail recette</a>
+  <a href="#p4">4. Films</a>
+  <a href="#p5">5. Séries</a>
+  <a href="#p6">6. Connexion</a>
+  <a href="#p7">7. Inscription</a>
+  <a href="#p8">8. Reset MDP</a>
+  <a href="#p9">9. Contact</a>
+  <a href="#p10">10. Mes recettes</a>
+  <a href="#p11">11. Créer recette</a>
+  <a href="#p12">12. Profil</a>
+  <a href="#p13">13. Notifications</a>
+  <a href="#p14">14. Admin — Validation</a>
+  <a href="#p15">15. Admin — Recettes</a>
+  <a href="#p16">16. Mentions légales</a>
+</nav>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- PAGE 1 : ACCUEIL                                       -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="page-section" id="p1">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <span class="section-name">Accueil</span>
+    <span class="section-route">/</span>
+  </div>
+  <div class="duo">
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar">
+          <div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text">Cinés Délices</span></div>
+          <div class="nav-links">
+            <span class="nav-link">Films</span><span class="nav-link">Séries</span><span class="nav-link">Recettes</span>
+            <span class="nav-btn-out">Connexion</span><span class="nav-btn">Inscription</span>
+          </div>
+        </div>
+        <div class="hero">
+          <div class="hero-badge">CUISINE &amp; CINÉMA</div>
+          <h1>Recettes inspirées<br>du cinéma et des séries</h1>
+          <p>Cuisinez comme vos personnages préférés</p>
+          <span class="hero-cta">Découvrir le catalogue</span>
+          <div class="film-strip"></div>
+        </div>
+        <div class="sec-title">Recettes vedettes</div>
+        <div class="grid4">
+          <div class="rcard"><div class="rcard-img" style="background:#2C3E20">🍲<span class="badge badge-plat">Plat</span></div><div class="rcard-body"><div class="rcard-title">Ratatouille de Rémy</div><div class="rcard-film"><div class="dot"></div>Ratatouille (2007)</div></div></div>
+          <div class="rcard"><div class="rcard-img" style="background:#3E1520">🍰<span class="badge badge-dessert">Dessert</span></div><div class="rcard-body"><div class="rcard-title">Tarte aux pommes de Bree</div><div class="rcard-film"><div class="dot"></div>Desperate Housewives</div></div></div>
+          <div class="rcard"><div class="rcard-img" style="background:#1A2A1A">🥗<span class="badge badge-entree">Entrée</span></div><div class="rcard-body"><div class="rcard-title">Soupe de Poudlard</div><div class="rcard-film"><div class="dot"></div>Harry Potter</div></div></div>
+          <div class="rcard"><div class="rcard-img" style="background:#1A2030">🍵<span class="badge badge-boisson">Boisson</span></div><div class="rcard-body"><div class="rcard-title">Thé du Chapelier Fou</div><div class="rcard-film"><div class="dot"></div>Alice au Pays des Merveilles</div></div></div>
+        </div>
+        <div class="sec-title">Films à l'honneur</div>
+        <div class="grid4" style="padding-bottom:16px">
+          <div class="rcard"><div class="rcard-img" style="background:#2C1810;height:65px">🎬</div><div class="rcard-body"><div class="rcard-title" style="font-size:10px">Ratatouille</div><div class="rcard-film" style="font-size:9px">3 recettes</div></div></div>
+          <div class="rcard"><div class="rcard-img" style="background:#1A2030;height:65px">🎬</div><div class="rcard-body"><div class="rcard-title" style="font-size:10px">Harry Potter</div><div class="rcard-film" style="font-size:9px">5 recettes</div></div></div>
+          <div class="rcard"><div class="rcard-img" style="background:#1C2010;height:65px">🎬</div><div class="rcard-body"><div class="rcard-title" style="font-size:10px">Julie &amp; Julia</div><div class="rcard-film" style="font-size:9px">4 recettes</div></div></div>
+          <div class="rcard"><div class="rcard-img" style="background:#201818;height:65px">🎬</div><div class="rcard-body"><div class="rcard-title" style="font-size:10px">Breaking Bad</div><div class="rcard-film" style="font-size:9px">2 recettes</div></div></div>
+        </div>
+        <div class="footer"><span class="footer-logo">Cinés Délices</span><div class="footer-links"><span class="footer-link">Mentions légales</span><span class="footer-link">Politique cookies</span><span class="footer-link">Contact</span></div></div>
+      </div>
+      <div class="screen-label">Desktop 1200px</div>
+    </div>
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar navbar-mobile"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text logo-text-sm">Cinés Délices</span></div><span class="nav-ham">☰</span></div>
+        <div class="hero hero-sm">
+          <div class="hero-badge" style="font-size:9px">CUISINE &amp; CINÉMA</div>
+          <h1>Recettes du cinéma</h1>
+          <p class="sm">Cuisinez comme vos héros</p>
+          <span class="hero-cta hero-cta-sm">Découvrir</span>
+          <div class="film-strip"></div>
+        </div>
+        <div class="sec-title sec-title-sm">Recettes vedettes</div>
+        <div class="grid2">
+          <div class="rcard"><div class="rcard-img rcard-img-sm" style="background:#2C3E20">🍲<span class="badge badge-plat">Plat</span></div><div class="rcard-body rcard-body-sm"><div class="rcard-title rcard-title-sm">Ratatouille de Rémy</div><div class="rcard-film rcard-film-sm"><div class="dot"></div>Ratatouille</div></div></div>
+          <div class="rcard"><div class="rcard-img rcard-img-sm" style="background:#3E1520">🍰<span class="badge badge-dessert">Dessert</span></div><div class="rcard-body rcard-body-sm"><div class="rcard-title rcard-title-sm">Tarte aux pommes</div><div class="rcard-film rcard-film-sm"><div class="dot"></div>Desperate H.</div></div></div>
+          <div class="rcard"><div class="rcard-img rcard-img-sm" style="background:#1A2A1A">🥗<span class="badge badge-entree">Entrée</span></div><div class="rcard-body rcard-body-sm"><div class="rcard-title rcard-title-sm">Soupe Poudlard</div><div class="rcard-film rcard-film-sm"><div class="dot"></div>Harry Potter</div></div></div>
+          <div class="rcard"><div class="rcard-img rcard-img-sm" style="background:#1A2030">🍵<span class="badge badge-boisson">Boisson</span></div><div class="rcard-body rcard-body-sm"><div class="rcard-title rcard-title-sm">Thé du Chapelier</div><div class="rcard-film rcard-film-sm"><div class="dot"></div>Alice</div></div></div>
+        </div>
+        <div class="footer footer-sm"><span class="footer-logo" style="font-size:10px">Cinés Délices</span></div>
+      </div>
+      <div class="screen-label">Mobile 390px</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- PAGE 2 : CATALOGUE                                     -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="page-section" id="p2">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <span class="section-name">Catalogue des recettes</span>
+    <span class="section-route">/recipes</span>
+  </div>
+  <div class="duo">
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text">Cinés Délices</span></div><div class="nav-links"><span class="nav-link">Films</span><span class="nav-link">Séries</span><span class="nav-btn-out">Connexion</span><span class="nav-btn">Inscription</span></div></div>
+        <div style="padding:16px 20px 4px;font-size:18px;color:var(--brun);font-weight:bold">Catalogue des recettes</div>
+        <div class="search-bar"><span class="search-icon">⌕</span><span class="search-placeholder">Rechercher une recette, un film ou une série... (temps réel, debounce 400ms)</span></div>
+        <div class="chips"><span class="chip on">Toutes</span><span class="chip">Entrée</span><span class="chip">Plat</span><span class="chip">Dessert</span><span class="chip">Boisson</span></div>
+        <div class="grid4">
+          <div class="rcard"><div class="rcard-img" style="background:#2C3E20">🍲<span class="badge badge-plat">Plat</span></div><div class="rcard-body"><div class="rcard-title">Ratatouille de Rémy</div><div class="rcard-film"><div class="dot"></div>Ratatouille</div></div></div>
+          <div class="rcard"><div class="rcard-img" style="background:#3E1520">🍰<span class="badge badge-dessert">Dessert</span></div><div class="rcard-body"><div class="rcard-title">Tarte Bree Van de Kamp</div><div class="rcard-film"><div class="dot"></div>Desperate Housewives</div></div></div>
+          <div class="rcard"><div class="rcard-img" style="background:#1A2A1A">🥗<span class="badge badge-entree">Entrée</span></div><div class="rcard-body"><div class="rcard-title">Soupe de Poudlard</div><div class="rcard-film"><div class="dot"></div>Harry Potter</div></div></div>
+          <div class="rcard"><div class="rcard-img" style="background:#1A2030">🍵<span class="badge badge-boisson">Boisson</span></div><div class="rcard-body"><div class="rcard-title">Thé du Chapelier Fou</div><div class="rcard-film"><div class="dot"></div>Alice au Pays des Merveilles</div></div></div>
+          <div class="rcard"><div class="rcard-img" style="background:#2C1810">🥩<span class="badge badge-plat">Plat</span></div><div class="rcard-body"><div class="rcard-title">Bœuf bourguignon</div><div class="rcard-film"><div class="dot"></div>Julie &amp; Julia</div></div></div>
+          <div class="rcard"><div class="rcard-img" style="background:#201818">🍬<span class="badge badge-dessert">Dessert</span></div><div class="rcard-body"><div class="rcard-title">Butterscotch BB</div><div class="rcard-film"><div class="dot"></div>Breaking Bad</div></div></div>
+          <div class="rcard"><div class="rcard-img" style="background:#1C2A30">🍜<span class="badge badge-plat">Plat</span></div><div class="rcard-body"><div class="rcard-title">Ramen Spirited Away</div><div class="rcard-film"><div class="dot"></div>Le Voyage de Chihiro</div></div></div>
+          <div class="rcard"><div class="rcard-img" style="background:#2A1C10">🥧<span class="badge badge-dessert">Dessert</span></div><div class="rcard-body"><div class="rcard-title">Tarte cerise Twin Peaks</div><div class="rcard-film"><div class="dot"></div>Twin Peaks</div></div></div>
+        </div>
+        <div class="pagination"><span class="pg on">1</span><span class="pg off">2</span><span class="pg off">3</span><span class="pg nav">Suiv. ›</span></div>
+        <div class="footer"><span class="footer-logo">Cinés Délices</span><div class="footer-links"><span class="footer-link">Mentions légales</span><span class="footer-link">Cookies</span></div></div>
+      </div>
+      <div class="screen-label">Desktop 1200px</div>
+    </div>
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar navbar-mobile"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text logo-text-sm">Cinés Délices</span></div><span class="nav-ham">☰</span></div>
+        <div style="padding:10px 12px 4px;font-size:13px;color:var(--brun);font-weight:bold;font-family:sans-serif">Catalogue</div>
+        <div class="search-bar search-bar-sm"><span class="search-icon">⌕</span><span class="search-placeholder search-placeholder-sm">Rechercher...</span></div>
+        <div class="chips chips-sm"><span class="chip chip-sm on">Toutes</span><span class="chip chip-sm">Entrée</span><span class="chip chip-sm">Plat</span><span class="chip chip-sm">Dessert</span></div>
+        <div class="grid2">
+          <div class="rcard"><div class="rcard-img rcard-img-sm" style="background:#2C3E20">🍲<span class="badge badge-plat">Plat</span></div><div class="rcard-body rcard-body-sm"><div class="rcard-title rcard-title-sm">Ratatouille de Rémy</div><div class="rcard-film rcard-film-sm"><div class="dot"></div>Ratatouille</div></div></div>
+          <div class="rcard"><div class="rcard-img rcard-img-sm" style="background:#3E1520">🍰<span class="badge badge-dessert">Dessert</span></div><div class="rcard-body rcard-body-sm"><div class="rcard-title rcard-title-sm">Tarte Bree</div><div class="rcard-film rcard-film-sm"><div class="dot"></div>Desperate H.</div></div></div>
+          <div class="rcard"><div class="rcard-img rcard-img-sm" style="background:#1A2A1A">🥗<span class="badge badge-entree">Entrée</span></div><div class="rcard-body rcard-body-sm"><div class="rcard-title rcard-title-sm">Soupe Poudlard</div><div class="rcard-film rcard-film-sm"><div class="dot"></div>Harry Potter</div></div></div>
+          <div class="rcard"><div class="rcard-img rcard-img-sm" style="background:#2C1810">🥩<span class="badge badge-plat">Plat</span></div><div class="rcard-body rcard-body-sm"><div class="rcard-title rcard-title-sm">Bœuf bourguignon</div><div class="rcard-film rcard-film-sm"><div class="dot"></div>Julie &amp; Julia</div></div></div>
+        </div>
+        <div class="pagination"><span class="pg on" style="font-size:9px">1</span><span class="pg off" style="font-size:9px">2</span><span class="pg nav" style="font-size:9px">›</span></div>
+        <div class="footer footer-sm"><span class="footer-logo" style="font-size:10px">Cinés Délices</span></div>
+      </div>
+      <div class="screen-label">Mobile 390px</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- PAGE 3 : DÉTAIL RECETTE                                -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="page-section" id="p3">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <span class="section-name">Détail d'une recette</span>
+    <span class="section-route">/recipes/:slug</span>
+  </div>
+  <div class="duo">
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text">Cinés Délices</span></div><div class="nav-links"><span class="nav-link">Films</span><span class="nav-link">Séries</span><span class="nav-btn-out">Connexion</span></div></div>
+        <div class="detail-split">
+          <div class="detail-img" style="background:linear-gradient(135deg,#2C3E20,#1a2a10)">🍲</div>
+          <div class="detail-info">
+            <div class="detail-title">Ratatouille de Rémy</div>
+            <div style="margin-bottom:8px"><span class="badge badge-plat" style="position:static;font-size:9px;display:inline-block">Plat</span></div>
+            <div class="detail-meta"><div class="meta">⏱ 20 min prép.</div><div class="meta">🔥 45 min cuisson</div><div class="meta">👥 4 personnes</div></div>
+            <div class="film-chip"><div class="film-poster">🎬</div><div class="film-info"><strong>Ratatouille (2007)</strong><span>Pixar · Animation · Brad Bird</span></div></div>
+            <div class="anecdote">"Dans le film, Rémy prépare cette ratatouille pour impressionner le redoutable critique Anton Ego, transformant à jamais son regard sur la cuisine..."</div>
+          </div>
+        </div>
+        <div class="ingr-instr">
+          <div class="ingr-col">
+            <div class="sub-title">🧂 Ingrédients</div>
+            <div class="ingr-row">2 courgettes <span>moyennes</span></div>
+            <div class="ingr-row">2 tomates <span>fermes</span></div>
+            <div class="ingr-row">1 aubergine <span>—</span></div>
+            <div class="ingr-row">2 c.s. huile d'olive <span>—</span></div>
+            <div class="ingr-row">Herbes de Provence <span>1 c.c.</span></div>
+            <div class="ingr-row">Sel, poivre <span>—</span></div>
+          </div>
+          <div class="instr-col">
+            <div class="sub-title">📋 Instructions</div>
+            <div class="step"><div class="step-n">1</div><div class="step-t">Préchauffez le four à 190°C (chaleur tournante).</div></div>
+            <div class="step"><div class="step-n">2</div><div class="step-t">Lavez tous les légumes et coupez-les en fines rondelles (2 mm).</div></div>
+            <div class="step"><div class="step-n">3</div><div class="step-t">Huilez légèrement un plat à gratin. Disposez les rondelles en alternance.</div></div>
+            <div class="step"><div class="step-n">4</div><div class="step-t">Arrosez d'huile d'olive, salez, poivrez, ajoutez les herbes.</div></div>
+            <div class="step"><div class="step-n">5</div><div class="step-t">Enfournez 45 minutes jusqu'à ce que les légumes soient fondants.</div></div>
+          </div>
+        </div>
+        <div class="footer"><span class="footer-logo">Cinés Délices</span><div class="footer-links"><span class="footer-link">Mentions légales</span><span class="footer-link">Cookies</span></div></div>
+      </div>
+      <div class="screen-label">Desktop 1200px</div>
+    </div>
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar navbar-mobile"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text logo-text-sm">Cinés Délices</span></div><span class="nav-ham">☰</span></div>
+        <div style="height:140px;background:linear-gradient(135deg,#2C3E20,#1a2a10);display:flex;align-items:center;justify-content:center;font-size:50px">🍲</div>
+        <div style="padding:14px">
+          <div style="font-size:16px;color:var(--brun);font-weight:bold;margin-bottom:6px">Ratatouille de Rémy</div>
+          <span class="badge badge-plat" style="position:static;font-size:9px;display:inline-block;margin-bottom:8px">Plat</span>
+          <div class="detail-meta" style="margin-bottom:10px"><div class="meta">⏱ 20min</div><div class="meta">🔥 45min</div><div class="meta">👥 4 pers.</div></div>
+          <div class="film-chip" style="margin-bottom:10px"><div class="film-poster" style="width:24px;height:34px;font-size:12px">🎬</div><div class="film-info"><strong>Ratatouille (2007)</strong><span>Pixar · Animation</span></div></div>
+          <div class="anecdote" style="margin-bottom:10px;font-size:9px">"Rémy prépare ce plat pour impressionner le critique Anton Ego..."</div>
+          <div class="sub-title">🧂 Ingrédients</div>
+          <div class="ingr-row" style="font-size:10px">2 courgettes <span>moyennes</span></div>
+          <div class="ingr-row" style="font-size:10px">2 tomates <span>fermes</span></div>
+          <div class="ingr-row" style="font-size:10px">1 aubergine <span>—</span></div>
+          <div class="sub-title" style="margin-top:10px">📋 Instructions</div>
+          <div class="step"><div class="step-n">1</div><div class="step-t">Préchauffez à 190°C.</div></div>
+          <div class="step"><div class="step-n">2</div><div class="step-t">Coupez les légumes en fines rondelles.</div></div>
+          <div class="step"><div class="step-n">3</div><div class="step-t">Disposez en alternance, arrosez d'huile, enfournez 45 min.</div></div>
+        </div>
+        <div class="footer footer-sm"><span class="footer-logo" style="font-size:10px">Cinés Délices</span></div>
+      </div>
+      <div class="screen-label">Mobile 390px</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- PAGE 4 : CATALOGUE FILMS                               -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="page-section" id="p4">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <span class="section-name">Films</span>
+    <span class="section-route">/films</span>
+  </div>
+  <div class="duo">
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text">Cinés Délices</span></div><div class="nav-links"><span class="nav-link">Films</span><span class="nav-link">Séries</span><span class="nav-btn-out">Connexion</span></div></div>
+        <div style="padding:16px 20px 4px;font-size:18px;color:var(--brun);font-weight:bold">Films inspirants</div>
+        <div class="search-bar"><span class="search-icon">⌕</span><span class="search-placeholder">Rechercher un film...</span></div>
+        <div class="media-grid">
+          <div class="media-card"><div class="media-poster" style="background:#2C1810">🎬</div><div class="media-info"><div class="media-title">Ratatouille</div><div class="media-sub">2007 · Pixar</div><span class="media-chip mc-movie">Film · 3 recettes</span></div></div>
+          <div class="media-card"><div class="media-poster" style="background:#1A2030">🎬</div><div class="media-info"><div class="media-title">Harry Potter à l'école des sorciers</div><div class="media-sub">2001 · Chris Columbus</div><span class="media-chip mc-movie">Film · 5 recettes</span></div></div>
+          <div class="media-card"><div class="media-poster" style="background:#1C2010">🎬</div><div class="media-info"><div class="media-title">Julie &amp; Julia</div><div class="media-sub">2009 · Nora Ephron</div><span class="media-chip mc-movie">Film · 4 recettes</span></div></div>
+          <div class="media-card"><div class="media-poster" style="background:#1C2A30">🎬</div><div class="media-info"><div class="media-title">Le Voyage de Chihiro</div><div class="media-sub">2001 · Miyazaki</div><span class="media-chip mc-movie">Film · 2 recettes</span></div></div>
+          <div class="media-card"><div class="media-poster" style="background:#2A1010">🎬</div><div class="media-info"><div class="media-title">Chocolat</div><div class="media-sub">2000 · Lasse Hallström</div><span class="media-chip mc-movie">Film · 3 recettes</span></div></div>
+        </div>
+        <div class="pagination"><span class="pg on">1</span><span class="pg off">2</span><span class="pg nav">Suiv. ›</span></div>
+        <div class="footer"><span class="footer-logo">Cinés Délices</span><div class="footer-links"><span class="footer-link">Mentions légales</span><span class="footer-link">Cookies</span></div></div>
+      </div>
+      <div class="screen-label">Desktop 1200px</div>
+    </div>
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar navbar-mobile"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text logo-text-sm">Cinés Délices</span></div><span class="nav-ham">☰</span></div>
+        <div style="padding:10px 12px 4px;font-size:13px;color:var(--brun);font-weight:bold;font-family:sans-serif">Films</div>
+        <div class="search-bar search-bar-sm"><span class="search-icon">⌕</span><span class="search-placeholder search-placeholder-sm">Rechercher un film...</span></div>
+        <div class="media-grid-2">
+          <div class="media-card"><div class="media-poster media-poster-sm" style="background:#2C1810">🎬</div><div class="media-info"><div class="media-title" style="font-size:10px">Ratatouille</div><div class="media-sub" style="font-size:9px">2007 · Pixar</div><span class="media-chip mc-movie">3 recettes</span></div></div>
+          <div class="media-card"><div class="media-poster media-poster-sm" style="background:#1A2030">🎬</div><div class="media-info"><div class="media-title" style="font-size:10px">Harry Potter</div><div class="media-sub" style="font-size:9px">2001</div><span class="media-chip mc-movie">5 recettes</span></div></div>
+          <div class="media-card"><div class="media-poster media-poster-sm" style="background:#1C2010">🎬</div><div class="media-info"><div class="media-title" style="font-size:10px">Julie &amp; Julia</div><div class="media-sub" style="font-size:9px">2009</div><span class="media-chip mc-movie">4 recettes</span></div></div>
+          <div class="media-card"><div class="media-poster media-poster-sm" style="background:#1C2A30">🎬</div><div class="media-info"><div class="media-title" style="font-size:10px">Voyage de Chihiro</div><div class="media-sub" style="font-size:9px">2001</div><span class="media-chip mc-movie">2 recettes</span></div></div>
+        </div>
+        <div class="footer footer-sm"><span class="footer-logo" style="font-size:10px">Cinés Délices</span></div>
+      </div>
+      <div class="screen-label">Mobile 390px</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- PAGE 5 : CATALOGUE SÉRIES                              -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="page-section" id="p5">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <span class="section-name">Séries</span>
+    <span class="section-route">/series</span>
+  </div>
+  <div class="duo">
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text">Cinés Délices</span></div><div class="nav-links"><span class="nav-link">Films</span><span class="nav-link">Séries</span><span class="nav-btn-out">Connexion</span></div></div>
+        <div style="padding:16px 20px 4px;font-size:18px;color:var(--brun);font-weight:bold">Séries inspirantes</div>
+        <div class="search-bar"><span class="search-icon">⌕</span><span class="search-placeholder">Rechercher une série...</span></div>
+        <div class="media-grid">
+          <div class="media-card"><div class="media-poster" style="background:#201818">📺</div><div class="media-info"><div class="media-title">Breaking Bad</div><div class="media-sub">2008–2013 · AMC</div><span class="media-chip mc-series">Série · 2 recettes</span></div></div>
+          <div class="media-card"><div class="media-poster" style="background:#2A1C10">📺</div><div class="media-info"><div class="media-title">Twin Peaks</div><div class="media-sub">1990–2017 · ABC/Showtime</div><span class="media-chip mc-series">Série · 3 recettes</span></div></div>
+          <div class="media-card"><div class="media-poster" style="background:#1A1A30">📺</div><div class="media-info"><div class="media-title">Desperate Housewives</div><div class="media-sub">2004–2012 · ABC</div><span class="media-chip mc-series">Série · 2 recettes</span></div></div>
+          <div class="media-card"><div class="media-poster" style="background:#102010">📺</div><div class="media-info"><div class="media-title">Emily in Paris</div><div class="media-sub">2020– · Netflix</div><span class="media-chip mc-series">Série · 4 recettes</span></div></div>
+          <div class="media-card"><div class="media-poster" style="background:#1C1020">📺</div><div class="media-info"><div class="media-title">Bridgerton</div><div class="media-sub">2020– · Netflix</div><span class="media-chip mc-series">Série · 3 recettes</span></div></div>
+        </div>
+        <div class="pagination"><span class="pg on">1</span><span class="pg off">2</span><span class="pg nav">Suiv. ›</span></div>
+        <div class="footer"><span class="footer-logo">Cinés Délices</span></div>
+      </div>
+      <div class="screen-label">Desktop 1200px</div>
+    </div>
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar navbar-mobile"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text logo-text-sm">Cinés Délices</span></div><span class="nav-ham">☰</span></div>
+        <div style="padding:10px 12px 4px;font-size:13px;color:var(--brun);font-weight:bold;font-family:sans-serif">Séries</div>
+        <div class="search-bar search-bar-sm"><span class="search-icon">⌕</span><span class="search-placeholder search-placeholder-sm">Rechercher une série...</span></div>
+        <div class="media-grid-2">
+          <div class="media-card"><div class="media-poster media-poster-sm" style="background:#201818">📺</div><div class="media-info"><div class="media-title" style="font-size:10px">Breaking Bad</div><span class="media-chip mc-series">2 recettes</span></div></div>
+          <div class="media-card"><div class="media-poster media-poster-sm" style="background:#2A1C10">📺</div><div class="media-info"><div class="media-title" style="font-size:10px">Twin Peaks</div><span class="media-chip mc-series">3 recettes</span></div></div>
+          <div class="media-card"><div class="media-poster media-poster-sm" style="background:#1A1A30">📺</div><div class="media-info"><div class="media-title" style="font-size:10px">Desperate Housewives</div><span class="media-chip mc-series">2 recettes</span></div></div>
+          <div class="media-card"><div class="media-poster media-poster-sm" style="background:#102010">📺</div><div class="media-info"><div class="media-title" style="font-size:10px">Emily in Paris</div><span class="media-chip mc-series">4 recettes</span></div></div>
+        </div>
+        <div class="footer footer-sm"><span class="footer-logo" style="font-size:10px">Cinés Délices</span></div>
+      </div>
+      <div class="screen-label">Mobile 390px</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- PAGE 6 : CONNEXION                                     -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="page-section" id="p6">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <span class="section-name">Connexion</span>
+    <span class="section-route">/login</span>
+  </div>
+  <div class="duo">
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text">Cinés Délices</span></div><div class="nav-links"><span class="nav-link">Films</span><span class="nav-link">Séries</span><span class="nav-btn">Inscription</span></div></div>
+        <div class="auth-pane" style="background:var(--grisL);min-height:320px">
+          <div class="auth-card">
+            <div class="auth-logo-t">Cinés Délices</div>
+            <div class="auth-title">Se connecter</div>
+            <div class="fg"><span class="fl">Email *</span><input class="fi" type="text" value="nathalie@example.com" readonly></div>
+            <div class="fg"><span class="fl">Mot de passe *</span><input class="fi" type="password" value="••••••••" readonly></div>
+            <button class="btn-p">Se connecter</button>
+            <div class="auth-links">Mot de passe oublié ? · <span class="auth-link">S'inscrire</span></div>
+          </div>
+        </div>
+        <div class="footer"><span class="footer-logo">Cinés Délices</span></div>
+      </div>
+      <div class="screen-label">Desktop 1200px</div>
+    </div>
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar navbar-mobile"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text logo-text-sm">Cinés Délices</span></div><span class="nav-ham">☰</span></div>
+        <div class="auth-pane" style="background:var(--grisL);padding:20px">
+          <div class="auth-card" style="max-width:100%">
+            <div class="auth-logo-t" style="font-size:14px">Cinés Délices</div>
+            <div class="auth-title" style="font-size:11px">Se connecter</div>
+            <div class="fg"><span class="fl">Email *</span><input class="fi" type="text" value="nathalie@example.com" readonly></div>
+            <div class="fg"><span class="fl">Mot de passe *</span><input class="fi" type="password" value="••••••••" readonly></div>
+            <button class="btn-p">Se connecter</button>
+            <div class="auth-links">Mot de passe oublié ? · <span class="auth-link">S'inscrire</span></div>
+          </div>
+        </div>
+        <div class="footer footer-sm"><span class="footer-logo" style="font-size:10px">Cinés Délices</span></div>
+      </div>
+      <div class="screen-label">Mobile 390px</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- PAGE 7 : INSCRIPTION                                   -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="page-section" id="p7">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <span class="section-name">Inscription</span>
+    <span class="section-route">/signup</span>
+  </div>
+  <div class="duo">
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text">Cinés Délices</span></div><div class="nav-links"><span class="nav-link">Films</span><span class="nav-link">Séries</span><span class="nav-btn-out">Connexion</span></div></div>
+        <div class="auth-pane" style="background:var(--creme);min-height:340px">
+          <div class="auth-card">
+            <div class="auth-logo-t">Cinés Délices</div>
+            <div class="auth-title">Créer un compte</div>
+            <div class="fg"><span class="fl">Pseudo *</span><input class="fi" type="text" value="NathalieL" readonly></div>
+            <div class="fg"><span class="fl">Email *</span><input class="fi" type="text" value="nathalie@example.com" readonly></div>
+            <div class="fg"><span class="fl">Mot de passe *</span><input class="fi" type="password" value="••••••••" readonly></div>
+            <button class="btn-p">Créer mon compte</button>
+            <div class="auth-links">Déjà inscrit ? <span class="auth-link">Se connecter</span></div>
+          </div>
+        </div>
+        <div class="footer"><span class="footer-logo">Cinés Délices</span></div>
+      </div>
+      <div class="screen-label">Desktop 1200px</div>
+    </div>
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar navbar-mobile"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text logo-text-sm">Cinés Délices</span></div><span class="nav-ham">☰</span></div>
+        <div class="auth-pane" style="background:var(--creme);padding:20px">
+          <div class="auth-card" style="max-width:100%">
+            <div class="auth-logo-t" style="font-size:14px">Cinés Délices</div>
+            <div class="auth-title" style="font-size:11px">Créer un compte</div>
+            <div class="fg"><span class="fl">Pseudo *</span><input class="fi" type="text" value="NathalieL" readonly></div>
+            <div class="fg"><span class="fl">Email *</span><input class="fi" type="text" value="nathalie@example.com" readonly></div>
+            <div class="fg"><span class="fl">Mot de passe *</span><input class="fi" type="password" value="••••••••" readonly></div>
+            <button class="btn-p">Créer mon compte</button>
+            <div class="auth-links">Déjà inscrit ? <span class="auth-link">Se connecter</span></div>
+          </div>
+        </div>
+        <div class="footer footer-sm"><span class="footer-logo" style="font-size:10px">Cinés Délices</span></div>
+      </div>
+      <div class="screen-label">Mobile 390px</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- PAGE 8 : RESET MOT DE PASSE                            -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="page-section" id="p8">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <span class="section-name">Réinitialisation mot de passe</span>
+    <span class="section-route">/reset-password</span>
+  </div>
+  <div class="duo">
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text">Cinés Délices</span></div><div class="nav-links"><span class="nav-btn-out">Connexion</span></div></div>
+        <div class="auth-pane" style="background:var(--grisL);min-height:280px">
+          <div class="auth-card">
+            <div class="auth-logo-t">Cinés Délices</div>
+            <div class="auth-title">Mot de passe oublié</div>
+            <p class="reset-info">Entrez votre adresse email. Nous vous enverrons un lien pour réinitialiser votre mot de passe.</p>
+            <div class="fg"><span class="fl">Votre email *</span><input class="fi" type="text" value="nathalie@example.com" readonly></div>
+            <button class="btn-p">Envoyer le lien</button>
+            <div class="auth-links"><span class="auth-link">← Retour à la connexion</span></div>
+          </div>
+        </div>
+        <div class="footer"><span class="footer-logo">Cinés Délices</span></div>
+      </div>
+      <div class="screen-label">Desktop 1200px</div>
+    </div>
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar navbar-mobile"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text logo-text-sm">Cinés Délices</span></div></div>
+        <div class="auth-pane" style="background:var(--grisL);padding:20px">
+          <div class="auth-card" style="max-width:100%">
+            <div class="auth-logo-t" style="font-size:14px">Cinés Délices</div>
+            <div class="auth-title" style="font-size:11px">Mot de passe oublié</div>
+            <p class="reset-info" style="font-size:10px">Entrez votre email pour recevoir un lien de réinitialisation.</p>
+            <div class="fg"><span class="fl">Votre email *</span><input class="fi" type="text" value="nathalie@example.com" readonly></div>
+            <button class="btn-p">Envoyer le lien</button>
+            <div class="auth-links"><span class="auth-link">← Retour connexion</span></div>
+          </div>
+        </div>
+        <div class="footer footer-sm"><span class="footer-logo" style="font-size:10px">Cinés Délices</span></div>
+      </div>
+      <div class="screen-label">Mobile 390px</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- PAGE 9 : CONTACT                                       -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="page-section" id="p9">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <span class="section-name">Contact</span>
+    <span class="section-route">/contact</span>
+  </div>
+  <div class="duo">
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text">Cinés Délices</span></div><div class="nav-links"><span class="nav-link">Films</span><span class="nav-link">Séries</span><span class="nav-btn-out">Connexion</span></div></div>
+        <div class="contact-layout">
+          <div class="contact-left">
+            <h2>Nous contacter</h2>
+            <p>Une question, une suggestion, un bug ? L'équipe Cinés Délices est là pour vous. Nous répondons sous 48h.</p>
+            <div class="contact-info">✉ contact@cinesdelices.fr</div>
+            <div class="contact-info">📍 Paris, France</div>
+          </div>
+          <div class="contact-form">
+            <div class="fg"><span class="fl" style="font-size:11px">Votre nom *</span><input class="fi" style="font-size:12px" type="text" value="Nathalie Leduc" readonly></div>
+            <div class="fg"><span class="fl" style="font-size:11px">Email *</span><input class="fi" style="font-size:12px" type="text" value="nathalie@example.com" readonly></div>
+            <div class="fg"><span class="fl" style="font-size:11px">Message *</span><textarea class="fi" style="height:80px;font-size:12px;resize:none" readonly>Bonjour, j'ai une question sur...</textarea></div>
+            <button class="btn-p" style="font-size:12px">Envoyer le message</button>
+          </div>
+        </div>
+        <div class="footer"><span class="footer-logo">Cinés Délices</span></div>
+      </div>
+      <div class="screen-label">Desktop 1200px</div>
+    </div>
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar navbar-mobile"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text logo-text-sm">Cinés Délices</span></div><span class="nav-ham">☰</span></div>
+        <div style="background:var(--brun);padding:16px;color:white">
+          <div style="font-size:13px;color:var(--or);font-weight:bold;margin-bottom:6px">Nous contacter</div>
+          <div style="font-size:10px;font-family:sans-serif;color:rgba(255,255,255,0.65)">L'équipe répond sous 48h.</div>
+        </div>
+        <div style="padding:14px">
+          <div class="fg"><span class="fl">Votre nom *</span><input class="fi" type="text" value="Nathalie Leduc" readonly></div>
+          <div class="fg"><span class="fl">Email *</span><input class="fi" type="text" value="nathalie@example.com" readonly></div>
+          <div class="fg"><span class="fl">Message *</span><textarea class="fi" style="height:70px;resize:none" readonly>Bonjour, j'ai une question...</textarea></div>
+          <button class="btn-p">Envoyer</button>
+        </div>
+        <div class="footer footer-sm"><span class="footer-logo" style="font-size:10px">Cinés Délices</span></div>
+      </div>
+      <div class="screen-label">Mobile 390px</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- PAGE 10 : MES RECETTES (MEMBRE)                        -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="page-section" id="p10">
+  <div class="section-header">
+    <span class="section-num">10</span>
+    <span class="section-name">Mes recettes</span>
+    <span class="section-route">/membre/mes-recettes</span>
+  </div>
+  <div class="duo">
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text">Cinés Délices</span></div><div class="nav-links"><span class="nav-link">Films</span><span class="nav-link">Séries</span><div class="avatar">NL</div></div></div>
+        <div class="workspace">
+          <div class="sidebar sb-dark">
+            <div class="sb-user"><div class="avatar">NL</div><div><div class="sb-name">Nathalie L.</div><div class="sb-role">Membre</div></div></div>
+            <ul class="sb-nav">
+              <li class="on">Mes recettes</li>
+              <li>En validation <span class="notif-badge">1</span></li>
+              <li>Notifications <span class="notif-badge">3</span></li>
+              <li>Mon profil</li>
+              <li>Contact</li>
+            </ul>
+            <span class="sb-btn">+ Nouvelle recette</span>
+          </div>
+          <div class="content">
+            <div class="c-header"><div class="c-title">Mes recettes</div><button class="btn-sm-or">+ Nouvelle recette</button></div>
+            <div class="tabs"><span class="tab on">Toutes (3)</span><span class="tab">Brouillon (1)</span><span class="tab">En validation (1)</span><span class="tab">Publiées (1)</span></div>
+            <div class="rrow"><div class="rrow-img">🍲</div><div class="rrow-info"><div class="rrow-title">Ratatouille de Rémy</div><div class="rrow-sub">Ratatouille (2007) · Plat · 4 pers.</div></div><div class="rrow-acts"><span class="pill pill-pub">PUBLIÉE</span><span class="act-btn">Modifier</span><span class="act-btn act-btn-rouge">✕</span></div></div>
+            <div class="rrow"><div class="rrow-img">🥧</div><div class="rrow-info"><div class="rrow-title">Tarte cerise Twin Peaks</div><div class="rrow-sub">Twin Peaks · Dessert · 8 pers.</div></div><div class="rrow-acts"><span class="pill pill-pend">EN VALIDATION</span><span class="act-btn">Voir</span></div></div>
+            <div class="rrow"><div class="rrow-img">🍵</div><div class="rrow-info"><div class="rrow-title">Thé du Chapelier Fou</div><div class="rrow-sub">Alice au Pays des Merveilles · Boisson</div></div><div class="rrow-acts"><span class="pill pill-draft">BROUILLON</span><span class="act-btn">Modifier</span><span class="act-btn act-btn-teal">Soumettre</span><span class="act-btn act-btn-rouge">✕</span></div></div>
+          </div>
+        </div>
+        <div class="footer"><span class="footer-logo">Cinés Délices</span></div>
+      </div>
+      <div class="screen-label">Desktop 1200px</div>
+    </div>
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar navbar-mobile"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text logo-text-sm">Cinés Délices</span></div><div class="avatar" style="width:28px;height:28px;font-size:10px">NL</div></div>
+        <div class="content" style="padding:12px">
+          <div class="c-header" style="margin-bottom:8px"><div class="c-title" style="font-size:12px">Mes recettes</div><button class="btn-sm-or" style="font-size:9px;padding:4px 8px">+ Nouvelle</button></div>
+          <div class="tabs" style="gap:4px;overflow-x:auto;flex-wrap:nowrap;margin-bottom:10px">
+            <span class="tab on" style="font-size:9px;white-space:nowrap">Toutes (3)</span>
+            <span class="tab" style="font-size:9px;white-space:nowrap">Brouillon</span>
+            <span class="tab" style="font-size:9px;white-space:nowrap">Validation</span>
+          </div>
+          <div class="rrow" style="flex-wrap:wrap;gap:6px"><div class="rrow-img">🍲</div><div class="rrow-info" style="min-width:0;flex:1"><div class="rrow-title">Ratatouille de Rémy</div><div class="rrow-sub">Ratatouille · Plat</div></div><div style="width:100%;display:flex;gap:4px;flex-wrap:wrap"><span class="pill pill-pub">PUBLIÉE</span><span class="act-btn">Modifier</span><span class="act-btn act-btn-rouge">✕</span></div></div>
+          <div class="rrow" style="flex-wrap:wrap;gap:6px"><div class="rrow-img">🥧</div><div class="rrow-info" style="min-width:0;flex:1"><div class="rrow-title">Tarte Twin Peaks</div><div class="rrow-sub">Twin Peaks · Dessert</div></div><div style="width:100%"><span class="pill pill-pend">EN VALIDATION</span></div></div>
+          <div class="rrow" style="flex-wrap:wrap;gap:6px"><div class="rrow-img">🍵</div><div class="rrow-info" style="min-width:0;flex:1"><div class="rrow-title">Thé Chapelier</div><div class="rrow-sub">Alice · Boisson</div></div><div style="width:100%;display:flex;gap:4px;flex-wrap:wrap"><span class="pill pill-draft">BROUILLON</span><span class="act-btn act-btn-teal">Soumettre</span><span class="act-btn act-btn-rouge">✕</span></div></div>
+        </div>
+        <div class="footer footer-sm"><span class="footer-logo" style="font-size:10px">Cinés Délices</span></div>
+      </div>
+      <div class="screen-label">Mobile 390px</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- PAGE 11 : CRÉER UNE RECETTE                            -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="page-section" id="p11">
+  <div class="section-header">
+    <span class="section-num">11</span>
+    <span class="section-name">Créer / Modifier une recette</span>
+    <span class="section-route">/membre/creer-recette</span>
+  </div>
+  <div class="duo">
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text">Cinés Délices</span></div><div class="nav-links"><div class="avatar">NL</div></div></div>
+        <div class="breadcrumb">← Retour &nbsp;/&nbsp; <span>Créer une recette</span></div>
+        <div class="form-split">
+          <div class="form-col">
+            <div class="fs-title">Informations générales</div>
+            <div class="fg-sm"><span class="fl-sm">Titre *</span><input class="fi-sm" type="text" value="Ratatouille de Rémy" readonly></div>
+            <div class="fg-sm"><span class="fl-sm">Catégorie *</span><select class="fsel"><option>Plat</option></select></div>
+            <div class="fg-sm">
+              <span class="fl-sm">Film ou Série * (TMDB)</span>
+              <input class="fi-sm" type="text" value="🔍  Ratatouille..." readonly>
+              <div class="tmdb-res"><div class="tmdb-p">🎬</div><div><div class="tmdb-n">Ratatouille (2007)</div><div class="tmdb-y">Pixar · Animation ✓ sélectionné</div></div></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+              <div class="fg-sm"><span class="fl-sm">Préparation (min)</span><input class="fi-sm" type="text" value="20" readonly></div>
+              <div class="fg-sm"><span class="fl-sm">Cuisson (min)</span><input class="fi-sm" type="text" value="45" readonly></div>
+              <div class="fg-sm"><span class="fl-sm">Personnes</span><input class="fi-sm" type="text" value="4" readonly></div>
+            </div>
+            <div class="fs-title" style="margin-top:12px">Instructions *</div>
+            <textarea class="ftarea" readonly>1. Préchauffez le four à 190°C.
+2. Coupez les légumes en fines rondelles.
+3. Disposez-les en alternance dans un plat huilé.
+4. Arrosez d'huile, salez, poivrez, enfournez 45 min.</textarea>
+            <div class="fg-sm" style="margin-top:10px"><span class="fl-sm">Anecdote (optionnel)</span><input class="fi-sm" type="text" value="Dans le film, Rémy prépare ce plat pour le critique Anton Ego..." readonly></div>
+          </div>
+          <div class="form-col">
+            <div class="fs-title">Photo de la recette</div>
+            <div class="upload-z">
+              <div class="upload-ic">📷</div>
+              <div class="upload-t">Glissez votre photo ici ou cliquez pour parcourir<br>JPG, PNG, WebP · Max 5 Mo<br>Convertie automatiquement en WebP par Sharp</div>
+            </div>
+            <div class="fs-title" style="margin-top:14px">Ingrédients</div>
+            <div class="ingr-row-f"><input class="fi-sm" type="text" value="Courgette" readonly><input class="fi-sm" type="text" value="2" readonly><select class="fsel"><option>pièce(s)</option></select><span class="del-ic">✕</span></div>
+            <div class="ingr-row-f"><input class="fi-sm" type="text" value="Tomate" readonly><input class="fi-sm" type="text" value="200" readonly><select class="fsel"><option>g</option></select><span class="del-ic">✕</span></div>
+            <div class="ingr-row-f"><input class="fi-sm" type="text" value="Huile d'olive" readonly><input class="fi-sm" type="text" value="2" readonly><select class="fsel"><option>c.s.</option></select><span class="del-ic">✕</span></div>
+            <div class="ingr-row-f"><input class="fi-sm" type="text" value="Aubergine" readonly><input class="fi-sm" type="text" value="1" readonly><select class="fsel"><option>pièce(s)</option></select><span class="del-ic">✕</span></div>
+            <div class="add-link">+ Ajouter un ingrédient</div>
+          </div>
+        </div>
+        <div class="form-acts"><span class="btn-sec">Enregistrer comme brouillon</span><span class="btn-prim">Soumettre pour validation</span></div>
+      </div>
+      <div class="screen-label">Desktop 1200px</div>
+    </div>
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar navbar-mobile"><div class="logo-wrap" style="gap:6px"><span style="color:var(--or);font-size:14px">←</span><span class="logo-text logo-text-sm">Créer une recette</span></div></div>
+        <div style="padding:12px">
+          <div class="fg-sm"><span class="fl-sm">Titre *</span><input class="fi-sm" type="text" value="Ratatouille de Rémy" readonly></div>
+          <div class="fg-sm"><span class="fl-sm">Catégorie *</span><select class="fsel"><option>Plat</option></select></div>
+          <div class="fg-sm">
+            <span class="fl-sm">Film ou Série * (TMDB)</span>
+            <input class="fi-sm" type="text" value="🔍  Ratatouille..." readonly>
+            <div class="tmdb-res" style="margin-top:4px"><div class="tmdb-p">🎬</div><div><div class="tmdb-n">Ratatouille (2007)</div><div class="tmdb-y">✓ sélectionné</div></div></div>
+          </div>
+          <div class="upload-z" style="margin:10px 0;padding:14px"><div class="upload-ic" style="font-size:18px">📷</div><div class="upload-t" style="font-size:9px">Choisir une photo · Max 5 Mo → WebP</div></div>
+          <div class="fs-title">Ingrédients</div>
+          <div style="display:grid;grid-template-columns:1fr 40px 50px 20px;gap:3px;margin-bottom:4px">
+            <input class="fi-sm" type="text" value="Courgette" readonly style="font-size:9px">
+            <input class="fi-sm" type="text" value="2" readonly style="font-size:9px">
+            <select class="fsel" style="font-size:9px"><option>pièce</option></select>
+            <span class="del-ic" style="font-size:12px">✕</span>
+          </div>
+          <div class="add-link" style="font-size:9px;margin-bottom:10px">+ Ajouter</div>
+          <div class="fs-title">Instructions *</div>
+          <textarea class="ftarea" style="height:55px;font-size:9px" readonly>1. Préchauffez à 190°C.
+2. Coupez en rondelles.
+3. Disposez, arrosez, enfournez 45 min.</textarea>
+        </div>
+        <div class="form-acts" style="flex-direction:column;gap:6px;padding:10px 12px">
+          <span class="btn-sec" style="font-size:10px;padding:7px">Enregistrer brouillon</span>
+          <span class="btn-prim" style="font-size:10px;padding:8px">Soumettre pour validation</span>
+        </div>
+      </div>
+      <div class="screen-label">Mobile 390px</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- PAGE 12 : PROFIL MEMBRE                                -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="page-section" id="p12">
+  <div class="section-header">
+    <span class="section-num">12</span>
+    <span class="section-name">Profil membre</span>
+    <span class="section-route">/membre/profil</span>
+  </div>
+  <div class="duo">
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text">Cinés Délices</span></div><div class="nav-links"><div class="avatar">NL</div></div></div>
+        <div class="workspace">
+          <div class="sidebar sb-dark">
+            <div class="sb-user"><div class="avatar">NL</div><div><div class="sb-name">Nathalie L.</div><div class="sb-role">Membre</div></div></div>
+            <ul class="sb-nav">
+              <li>Mes recettes</li>
+              <li>Notifications <span class="notif-badge">3</span></li>
+              <li class="on">Mon profil</li>
+              <li>Contact</li>
+            </ul>
+          </div>
+          <div class="content">
+            <div class="c-title" style="margin-bottom:14px">Mon profil</div>
+            <div class="profile-card">
+              <div class="profile-header"><div class="avatar-lg">NL</div><div><div class="profile-name">Nathalie Leduc</div><div class="profile-email">nathalie@example.com</div><span class="pill pill-pub" style="font-size:9px;margin-top:4px;display:inline-block">MEMBRE</span></div></div>
+              <div class="profile-stats">
+                <div class="stat-box"><div class="stat-n">3</div><div class="stat-l">Recettes</div></div>
+                <div class="stat-box"><div class="stat-n">1</div><div class="stat-l">Publiée</div></div>
+                <div class="stat-box"><div class="stat-n">12</div><div class="stat-l">Jours actifs</div></div>
+              </div>
+              <div class="fs-title">Modifier mes informations</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div class="fg-sm"><span class="fl-sm">Pseudo</span><input class="fi-sm" type="text" value="NathalieL" readonly></div>
+                <div class="fg-sm"><span class="fl-sm">Nom</span><input class="fi-sm" type="text" value="Nathalie Leduc" readonly></div>
+                <div class="fg-sm"><span class="fl-sm">Email</span><input class="fi-sm" type="text" value="nathalie@example.com" readonly></div>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:12px">
+                <span class="btn-prim" style="flex:none;padding:7px 16px;border-radius:4px;font-size:10px;cursor:pointer">Enregistrer</span>
+                <span class="act-btn act-btn-rouge" style="font-size:10px;padding:6px 12px;cursor:pointer">Supprimer mon compte</span>
+              </div>
+            </div>
+            <div class="profile-card">
+              <div class="fs-title">Changer mon mot de passe</div>
+              <div class="fg-sm"><span class="fl-sm">Mot de passe actuel</span><input class="fi-sm" type="password" value="••••••••" readonly></div>
+              <div class="fg-sm"><span class="fl-sm">Nouveau mot de passe</span><input class="fi-sm" type="password" value="••••••••" readonly></div>
+              <div class="fg-sm"><span class="fl-sm">Confirmer</span><input class="fi-sm" type="password" value="••••••••" readonly></div>
+              <span class="btn-prim" style="display:inline-block;padding:7px 16px;border-radius:4px;font-size:10px;cursor:pointer;margin-top:4px">Changer le mot de passe</span>
+            </div>
+          </div>
+        </div>
+        <div class="footer"><span class="footer-logo">Cinés Délices</span></div>
+      </div>
+      <div class="screen-label">Desktop 1200px</div>
+    </div>
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar navbar-mobile"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text logo-text-sm">Mon profil</span></div><div class="avatar" style="width:28px;height:28px;font-size:10px">NL</div></div>
+        <div style="padding:14px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #E0D8CC">
+            <div class="avatar-lg" style="width:44px;height:44px;font-size:15px">NL</div>
+            <div><div class="profile-name" style="font-size:14px">Nathalie Leduc</div><div class="profile-email">nathalie@example.com</div></div>
+          </div>
+          <div class="profile-stats" style="margin-bottom:14px">
+            <div class="stat-box"><div class="stat-n">3</div><div class="stat-l">Recettes</div></div>
+            <div class="stat-box"><div class="stat-n">1</div><div class="stat-l">Publiée</div></div>
+            <div class="stat-box"><div class="stat-n">12</div><div class="stat-l">Jours</div></div>
+          </div>
+          <div class="fg-sm"><span class="fl-sm">Pseudo</span><input class="fi-sm" type="text" value="NathalieL" readonly></div>
+          <div class="fg-sm"><span class="fl-sm">Nom</span><input class="fi-sm" type="text" value="Nathalie Leduc" readonly></div>
+          <span class="btn-prim" style="display:block;padding:8px;border-radius:4px;text-align:center;font-size:10px;margin-top:6px;margin-bottom:14px">Enregistrer</span>
+          <div class="fs-title">Changer le mot de passe</div>
+          <div class="fg-sm"><span class="fl-sm">MDP actuel</span><input class="fi-sm" type="password" value="••••••••" readonly></div>
+          <div class="fg-sm"><span class="fl-sm">Nouveau MDP</span><input class="fi-sm" type="password" value="••••••••" readonly></div>
+          <span class="btn-prim" style="display:block;padding:8px;border-radius:4px;text-align:center;font-size:10px;margin-top:6px">Changer</span>
+        </div>
+        <div class="footer footer-sm"><span class="footer-logo" style="font-size:10px">Cinés Délices</span></div>
+      </div>
+      <div class="screen-label">Mobile 390px</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- PAGE 13 : NOTIFICATIONS                                -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="page-section" id="p13">
+  <div class="section-header">
+    <span class="section-num">13</span>
+    <span class="section-name">Notifications</span>
+    <span class="section-route">/membre/notifications</span>
+  </div>
+  <div class="duo">
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text">Cinés Délices</span></div><div class="nav-links"><div class="avatar">NL</div></div></div>
+        <div class="workspace">
+          <div class="sidebar sb-dark">
+            <div class="sb-user"><div class="avatar">NL</div><div><div class="sb-name">Nathalie L.</div><div class="sb-role">Membre</div></div></div>
+            <ul class="sb-nav">
+              <li>Mes recettes</li>
+              <li class="on">Notifications <span class="notif-badge">3</span></li>
+              <li>Mon profil</li>
+              <li>Contact</li>
+            </ul>
+          </div>
+          <div class="content">
+            <div class="c-header" style="margin-bottom:12px"><div class="c-title">Mes notifications</div><span class="act-btn" style="font-size:10px;padding:5px 10px">Tout marquer lu</span></div>
+            <div class="notif-item"><div class="notif-dot-or"></div><div><div class="notif-txt">Votre recette <strong>"Tarte cerise Twin Peaks"</strong> a été publiée ! Elle est maintenant visible dans le catalogue.</div><div class="notif-time">Il y a 2 heures</div></div></div>
+            <div class="notif-item"><div class="notif-dot-or"></div><div><div class="notif-txt">Votre recette <strong>"Bœuf bourguignon"</strong> a été refusée. Motif : photo manquante.</div><div class="notif-time">Hier à 14h30</div></div></div>
+            <div class="notif-item"><div class="notif-dot-or notif-dot-g"></div><div><div class="notif-txt" style="color:var(--gris)">Bienvenue sur Cinés Délices ! Commencez à créer votre première recette.</div><div class="notif-time">12/04/2026</div></div></div>
+          </div>
+        </div>
+        <div class="footer"><span class="footer-logo">Cinés Délices</span></div>
+      </div>
+      <div class="screen-label">Desktop 1200px</div>
+    </div>
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar navbar-mobile"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text logo-text-sm">Notifications</span></div><div class="notif-badge" style="width:20px;height:20px;font-size:10px">3</div></div>
+        <div style="padding:12px">
+          <div class="notif-item"><div class="notif-dot-or"></div><div><div class="notif-txt" style="font-size:10px">Votre recette "Tarte cerise" a été <strong>publiée</strong> !</div><div class="notif-time">Il y a 2h</div></div></div>
+          <div class="notif-item"><div class="notif-dot-or"></div><div><div class="notif-txt" style="font-size:10px">Recette "Bœuf bourguignon" <strong>refusée</strong>. Motif : photo manquante.</div><div class="notif-time">Hier</div></div></div>
+          <div class="notif-item"><div class="notif-dot-or notif-dot-g"></div><div><div class="notif-txt" style="color:var(--gris);font-size:10px">Bienvenue sur Cinés Délices !</div><div class="notif-time">12/04/2026</div></div></div>
+        </div>
+        <div class="footer footer-sm"><span class="footer-logo" style="font-size:10px">Cinés Délices</span></div>
+      </div>
+      <div class="screen-label">Mobile 390px</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- PAGE 14 : ADMIN — VALIDATION RECETTES                  -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="page-section" id="p14">
+  <div class="section-header">
+    <span class="section-num">14</span>
+    <span class="section-name">Admin — Validation des recettes</span>
+    <span class="section-route">/admin/validation-recettes</span>
+  </div>
+  <div class="duo">
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar" style="background:#111"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text">Cinés Délices</span></div><div class="nav-links"><span style="font-size:10px;background:var(--rouge);color:white;padding:3px 8px;border-radius:3px;font-family:sans-serif">ADMIN</span><div class="avatar avatar-rouge">AD</div></div></div>
+        <div class="workspace">
+          <div class="sidebar sb-black">
+            <div class="sb-user"><div class="avatar avatar-rouge">AD</div><div><div class="sb-name">Administrateur</div><div class="sb-role">Back-office</div></div></div>
+            <ul class="sb-nav">
+              <li class="on-rouge">Validation recettes <span class="notif-badge">3</span></li>
+              <li>Toutes les recettes</li>
+              <li>Catégories</li>
+              <li>Ingrédients <span class="notif-badge notif-badge-g">5</span></li>
+              <li>Validation ingr.</li>
+              <li>Utilisateurs</li>
+              <li>Notifications <span class="notif-badge">2</span></li>
+            </ul>
+            <span class="sb-btn">+ Créer une recette</span>
+          </div>
+          <div class="content">
+            <div class="c-header"><div class="c-title" style="font-size:13px">Validation des recettes &nbsp;<span style="font-size:11px;color:var(--rouge);font-weight:normal">3 en attente</span></div></div>
+            <div class="admin-card"><div class="admin-card-hd"><div><div class="admin-card-title">Ratatouille de Rémy</div><div class="admin-card-meta">Par Nathalie L. · Plat · 4 pers. · Ratatouille (2007) · Soumis le 10/04/2026</div></div><span class="pill pill-pend">EN ATTENTE</span></div><div class="admin-acts"><button class="btn-view">Voir le détail</button><button class="btn-pub">✓ Publier</button><button class="btn-rej">✕ Refuser</button></div></div>
+            <div class="admin-card"><div class="admin-card-hd"><div><div class="admin-card-title">Pasta de Poudlard</div><div class="admin-card-meta">Par Vincent D. · Plat · 6 pers. · Harry Potter · Soumis le 11/04/2026</div></div><span class="pill pill-pend">EN ATTENTE</span></div><div class="admin-acts"><button class="btn-view">Voir le détail</button><button class="btn-pub">✓ Publier</button><button class="btn-rej">✕ Refuser</button></div></div>
+            <div class="admin-card"><div class="admin-card-hd"><div><div class="admin-card-title">Butterscotch Breaking Bad</div><div class="admin-card-meta">Par Orianne J. · Dessert · Breaking Bad · Soumis le 12/04/2026</div></div><span class="pill pill-pend">EN ATTENTE</span></div><div class="admin-acts"><button class="btn-view">Voir le détail</button><button class="btn-pub">✓ Publier</button><button class="btn-rej">✕ Refuser</button></div></div>
+          </div>
+        </div>
+        <div class="footer" style="background:#111"><span class="footer-logo">Cinés Délices · Admin</span></div>
+      </div>
+      <div class="screen-label">Desktop 1200px</div>
+    </div>
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar navbar-mobile" style="background:#111"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text logo-text-sm">Cinés Délices</span></div><div style="display:flex;gap:6px;align-items:center"><span style="font-size:9px;background:var(--rouge);color:white;padding:2px 6px;border-radius:3px;font-family:sans-serif">ADMIN</span><span class="nav-ham">☰</span></div></div>
+        <div class="content" style="padding:12px">
+          <div class="c-title" style="font-size:12px;margin-bottom:10px">Validation &nbsp;<span style="color:var(--rouge);font-size:10px;font-weight:normal">3 en attente</span></div>
+          <div class="admin-card"><div class="admin-card-title" style="font-size:11px">Ratatouille de Rémy</div><div class="admin-card-meta" style="font-size:9px;margin-bottom:8px">Nathalie · Plat · Ratatouille (2007)</div><div class="admin-acts" style="gap:4px"><button class="btn-pub" style="font-size:9px;padding:4px 8px;flex:1">✓ Publier</button><button class="btn-rej" style="font-size:9px;padding:4px 8px;flex:1">✕ Refuser</button></div></div>
+          <div class="admin-card"><div class="admin-card-title" style="font-size:11px">Pasta de Poudlard</div><div class="admin-card-meta" style="font-size:9px;margin-bottom:8px">Vincent · Plat · Harry Potter</div><div class="admin-acts" style="gap:4px"><button class="btn-pub" style="font-size:9px;padding:4px 8px;flex:1">✓ Publier</button><button class="btn-rej" style="font-size:9px;padding:4px 8px;flex:1">✕ Refuser</button></div></div>
+          <div class="admin-card"><div class="admin-card-title" style="font-size:11px">Butterscotch BB</div><div class="admin-card-meta" style="font-size:9px;margin-bottom:8px">Orianne · Dessert · Breaking Bad</div><div class="admin-acts" style="gap:4px"><button class="btn-pub" style="font-size:9px;padding:4px 8px;flex:1">✓ Publier</button><button class="btn-rej" style="font-size:9px;padding:4px 8px;flex:1">✕ Refuser</button></div></div>
+        </div>
+        <div class="footer footer-sm" style="background:#111"><span class="footer-logo" style="font-size:10px">Cinés Délices · Admin</span></div>
+      </div>
+      <div class="screen-label">Mobile 390px</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- PAGE 15 : ADMIN — GESTION RECETTES                     -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="page-section" id="p15">
+  <div class="section-header">
+    <span class="section-num">15</span>
+    <span class="section-name">Admin — Toutes les recettes</span>
+    <span class="section-route">/admin/recettes</span>
+  </div>
+  <div class="duo">
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar" style="background:#111"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text">Cinés Délices</span></div><div class="nav-links"><span style="font-size:10px;background:var(--rouge);color:white;padding:3px 8px;border-radius:3px;font-family:sans-serif">ADMIN</span><div class="avatar avatar-rouge">AD</div></div></div>
+        <div class="workspace">
+          <div class="sidebar sb-black">
+            <div class="sb-user"><div class="avatar avatar-rouge">AD</div><div><div class="sb-name">Administrateur</div><div class="sb-role">Back-office</div></div></div>
+            <ul class="sb-nav">
+              <li>Validation recettes <span class="notif-badge">3</span></li>
+              <li class="on-rouge">Toutes les recettes</li>
+              <li>Catégories</li>
+              <li>Ingrédients</li>
+              <li>Validation ingr.</li>
+              <li>Utilisateurs</li>
+              <li>Notifications</li>
+            </ul>
+            <span class="sb-btn">+ Créer une recette</span>
+          </div>
+          <div class="content">
+            <div class="c-header"><div class="c-title" style="font-size:13px">Toutes les recettes</div><button class="btn-sm-or">+ Créer une recette</button></div>
+            <div class="tabs"><span class="tab on">Toutes (12)</span><span class="tab">Publiées (8)</span><span class="tab">En attente (3)</span><span class="tab">Brouillons (1)</span></div>
+            <div class="rrow"><div class="rrow-img">🍲</div><div class="rrow-info"><div class="rrow-title">Ratatouille de Rémy</div><div class="rrow-sub">Nathalie L. · Plat · Ratatouille (2007)</div></div><div class="rrow-acts"><span class="pill pill-pub">PUBLIÉE</span><span class="act-btn">Modifier</span><span class="act-btn act-btn-rouge">Supprimer</span></div></div>
+            <div class="rrow"><div class="rrow-img">🥧</div><div class="rrow-info"><div class="rrow-title">Tarte cerise Twin Peaks</div><div class="rrow-sub">Nathalie L. · Dessert · Twin Peaks</div></div><div class="rrow-acts"><span class="pill pill-pend">EN ATTENTE</span><span class="act-btn">Modifier</span><button class="btn-pub" style="font-size:9px;padding:3px 8px">Publier</button><button class="btn-rej" style="font-size:9px;padding:3px 8px">Refuser</button></div></div>
+            <div class="rrow"><div class="rrow-img">🥩</div><div class="rrow-info"><div class="rrow-title">Bœuf bourguignon</div><div class="rrow-sub">Emilie V. · Plat · Julie &amp; Julia</div></div><div class="rrow-acts"><span class="pill pill-pub">PUBLIÉE</span><span class="act-btn">Modifier</span><span class="act-btn act-btn-rouge">Supprimer</span></div></div>
+            <div class="rrow"><div class="rrow-img">🍵</div><div class="rrow-info"><div class="rrow-title">Thé du Chapelier Fou</div><div class="rrow-sub">Nathalie L. · Boisson · Alice</div></div><div class="rrow-acts"><span class="pill pill-draft">BROUILLON</span><span class="act-btn">Modifier</span><span class="act-btn act-btn-rouge">Supprimer</span></div></div>
+          </div>
+        </div>
+        <div class="footer" style="background:#111"><span class="footer-logo">Cinés Délices · Admin</span></div>
+      </div>
+      <div class="screen-label">Desktop 1200px</div>
+    </div>
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar navbar-mobile" style="background:#111"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text logo-text-sm">Admin · Recettes</span></div><span class="nav-ham" style="color:var(--rouge)">☰</span></div>
+        <div class="content" style="padding:12px">
+          <div class="c-title" style="font-size:12px;margin-bottom:8px">Toutes les recettes</div>
+          <div class="tabs" style="gap:4px;overflow-x:auto;flex-wrap:nowrap;margin-bottom:10px">
+            <span class="tab on" style="font-size:9px;white-space:nowrap">Toutes (12)</span>
+            <span class="tab" style="font-size:9px;white-space:nowrap">Publiées</span>
+            <span class="tab" style="font-size:9px;white-space:nowrap">En attente</span>
+          </div>
+          <div class="rrow" style="flex-wrap:wrap;gap:5px"><div class="rrow-img">🍲</div><div class="rrow-info" style="min-width:0;flex:1"><div class="rrow-title">Ratatouille de Rémy</div><div class="rrow-sub">Plat · Ratatouille (2007)</div></div><div style="width:100%;display:flex;gap:3px;flex-wrap:wrap"><span class="pill pill-pub">PUBLIÉE</span><span class="act-btn" style="font-size:9px">Modifier</span><span class="act-btn act-btn-rouge" style="font-size:9px">Suppr.</span></div></div>
+          <div class="rrow" style="flex-wrap:wrap;gap:5px"><div class="rrow-img">🥧</div><div class="rrow-info" style="min-width:0;flex:1"><div class="rrow-title">Tarte Twin Peaks</div><div class="rrow-sub">Dessert · Twin Peaks</div></div><div style="width:100%;display:flex;gap:3px;flex-wrap:wrap"><span class="pill pill-pend">EN ATTENTE</span><button class="btn-pub" style="font-size:9px;padding:3px 7px">Publier</button><button class="btn-rej" style="font-size:9px;padding:3px 7px">Refuser</button></div></div>
+        </div>
+        <div class="footer footer-sm" style="background:#111"><span class="footer-logo" style="font-size:10px">Cinés Délices · Admin</span></div>
+      </div>
+      <div class="screen-label">Mobile 390px</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- PAGE 16 : MENTIONS LÉGALES                             -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="page-section" id="p16">
+  <div class="section-header">
+    <span class="section-num">16</span>
+    <span class="section-name">Mentions légales</span>
+    <span class="section-route">/mentions-legales</span>
+  </div>
+  <div class="duo">
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text">Cinés Délices</span></div><div class="nav-links"><span class="nav-link">Films</span><span class="nav-link">Séries</span><span class="nav-btn-out">Connexion</span></div></div>
+        <div class="legal-content">
+          <div style="font-size:20px;color:var(--brun);font-weight:bold;margin-bottom:4px">Mentions légales</div>
+          <div style="font-size:11px;color:var(--gris);font-family:sans-serif;margin-bottom:20px">Dernière mise à jour : avril 2026</div>
+          <div class="legal-h2">Éditeur du site</div>
+          <p class="legal-p">Cinés Délices est un projet pédagogique développé dans le cadre de la formation CDA (Concepteur Développeur d'Applications) dispensée par O'clock.</p>
+          <div class="legal-h2">Hébergement</div>
+          <p class="legal-p">Le site est hébergé par Railway App (San Francisco, CA, USA). URL : https://railway.app</p>
+          <div class="legal-h2">Propriété intellectuelle</div>
+          <p class="legal-p">Les recettes publiées sur Cinés Délices sont soumises à validation avant publication. Les contenus soumis restent la propriété de leurs auteurs.</p>
+          <div class="legal-h2">Données personnelles (RGPD)</div>
+          <p class="legal-p">Conformément au RGPD, vous disposez d'un droit d'accès, de rectification et de suppression de vos données. Pour exercer ce droit, contactez-nous via le formulaire de contact ou supprimez votre compte depuis votre profil.</p>
+          <div class="legal-h2">Cookies</div>
+          <p class="legal-p">Ce site utilise des cookies fonctionnels uniquement. La gestion du consentement est assurée par tarteaucitron.js conformément aux recommandations CNIL.</p>
+        </div>
+        <div class="footer"><span class="footer-logo">Cinés Délices</span><div class="footer-links"><span class="footer-link">Mentions légales</span><span class="footer-link">Politique cookies</span><span class="footer-link">Contact</span><span class="footer-link">Règles de modération</span></div></div>
+      </div>
+      <div class="screen-label">Desktop 1200px</div>
+    </div>
+    <div class="screen-wrap">
+      <div class="screen">
+        <div class="navbar navbar-mobile"><div class="logo-wrap"><div class="logo-icon"></div><span class="logo-text logo-text-sm">Cinés Délices</span></div><span class="nav-ham">☰</span></div>
+        <div style="padding:14px">
+          <div style="font-size:14px;color:var(--brun);font-weight:bold;margin-bottom:12px">Mentions légales</div>
+          <div class="legal-h2" style="font-size:12px">Éditeur du site</div>
+          <p class="legal-p" style="font-size:10px">Cinés Délices est un projet pédagogique CDA O'clock.</p>
+          <div class="legal-h2" style="font-size:12px">Hébergement</div>
+          <p class="legal-p" style="font-size:10px">Hébergé par Railway App (San Francisco, USA).</p>
+          <div class="legal-h2" style="font-size:12px">Données personnelles (RGPD)</div>
+          <p class="legal-p" style="font-size:10px">Droit d'accès, rectification, suppression via le formulaire de contact ou la suppression de compte.</p>
+          <div class="legal-h2" style="font-size:12px">Cookies</div>
+          <p class="legal-p" style="font-size:10px">Cookies fonctionnels uniquement, gérés par tarteaucitron.js (conformité CNIL).</p>
+        </div>
+        <div class="footer footer-sm"><span class="footer-logo" style="font-size:10px">Cinés Délices</span></div>
+      </div>
+      <div class="screen-label">Mobile 390px</div>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

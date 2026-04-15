@@ -1,0 +1,82 @@
+Table "CATÉGORIE" {
+  "nom"         VARCHAR(42) [pk, NOT NULL]
+  "description" VARCHAR(42)
+  "couleur"     VARCHAR(42)
+}
+
+Table "CONTENIR" {
+  "titre"    VARCHAR(42) [NOT NULL]
+  "nom"      VARCHAR(42) [NOT NULL]
+  "quantité" VARCHAR(42)
+  "unité"    VARCHAR(42)
+  Indexes {
+    ("titre", "nom") [pk]
+  }
+}
+
+Table "GENRE" {
+  "identifiant_TMDB_genre" VARCHAR(42) [pk, NOT NULL]
+  "nom"                    VARCHAR(42)
+}
+
+Table "INGRÉDIENT" {
+  "nom"      VARCHAR(42) [pk, NOT NULL]
+  "approuvé" VARCHAR(42)
+}
+
+Table "MÉDIA" {
+  "identifiant_TMDB" VARCHAR(42) [pk, NOT NULL]
+  "titre 1"          VARCHAR(42)
+  "type"             VARCHAR(42)
+  "slug"             VARCHAR(42)
+  "affiche"          VARCHAR(42)
+  "synopsis"         VARCHAR(42)
+  "année"            VARCHAR(42)
+  "réalisateur"      VARCHAR(42)
+  "titre 2"          VARCHAR(42) [NOT NULL]
+}
+
+Table "NOTIFICATION" {
+  "type"    VARCHAR(42) [pk, NOT NULL]
+  "message" VARCHAR(42)
+  "lu"      VARCHAR(42)
+  "email"   VARCHAR(42) [NOT NULL]
+}
+
+Table "POSSÉDER" {
+  "identifiant_TMDB"       VARCHAR(42) [NOT NULL]
+  "identifiant_TMDB_genre" VARCHAR(42) [NOT NULL]
+  Indexes {
+    ("identifiant_TMDB", "identifiant_TMDB_genre") [pk]
+  }
+}
+
+Table "RECETTE" {
+  "titre"             VARCHAR(42) [pk, NOT NULL]
+  "slug"              VARCHAR(42)
+  "statut"            VARCHAR(42)
+  "motif_refus"       VARCHAR(42)
+  "nombre_personnes"  VARCHAR(42)
+  "temps_préparation" VARCHAR(42)
+  "temps_cuisson"     VARCHAR(42)
+  "photo"             VARCHAR(42)
+  "email"             VARCHAR(42) [NOT NULL]
+  "nom"               VARCHAR(42) [NOT NULL]
+}
+
+Table "UTILISATEUR" {
+  "email"              VARCHAR(42) [pk, NOT NULL]
+  "pseudo"             VARCHAR(42)
+  "nom"                VARCHAR(42)
+  "rôle"               VARCHAR(42)
+  "dernière_connexion" VARCHAR(42)
+}
+
+Ref:"CONTENIR"."titre" > "RECETTE"."titre"
+Ref:"CONTENIR"."nom" > "INGRÉDIENT"."nom"
+Ref:"MÉDIA"."titre 2" > "RECETTE"."titre"
+Ref:"NOTIFICATION"."email" > "UTILISATEUR"."email"
+Ref:"POSSÉDER"."identifiant_TMDB" > "MÉDIA"."identifiant_TMDB"
+Ref:"POSSÉDER"."identifiant_TMDB_genre" > "GENRE"."identifiant_TMDB_genre"
+Ref:"RECETTE"."email" > "UTILISATEUR"."email"
+Ref:"RECETTE"."nom" > "CATÉGORIE"."nom"
