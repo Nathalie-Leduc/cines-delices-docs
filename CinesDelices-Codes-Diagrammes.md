@@ -14,8 +14,9 @@
 # 8.  PlantUML — Diagramme d'états (RecipeStatus)
 # 9.  PlantUML — Diagramme d'activité (workflow publication)
 # 10. PlantUML — Diagramme de composants
-# 11. Excalidraw — JSON complet (wireframes 7 pages D+M)
-# 12. Figma — Guide maquettes
+# 11. PlantUML — Diagramme de déploiement
+# 121. Excalidraw — JSON complet (wireframes 7 pages D+M)
+# 13. Figma — Guide maquettes
 # ================================================================
 
 
