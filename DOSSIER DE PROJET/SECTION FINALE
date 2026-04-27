@@ -1,0 +1,3209 @@
+## Bloc 1 — Développer une application sécurisée
+
+### 1.1 Installation et configuration de l'environnement
+
+#### 1.1.1 Description de l'environnement de développement
+
+L'équipe a travaillé sur des postes Ubuntu 22.04 LTS (machines de l'école) 
+ainsi que sur des environnements personnels (macOS / Windows + WSL2 Ubuntu). 
+Ce choix d'un socle Linux commun garantit la cohérence entre les environnements 
+de développement et de production (Railway tourne sur Linux).
+
+| Outil | Version | Rôle |
+|-------|---------|------|
+| VS Code | 1.88+ | IDE principal |
+| Node.js | 24 LTS | Runtime JavaScript backend |
+| pnpm | 9.x | Gestionnaire de paquets |
+| PostgreSQL | 16 | Base de données relationnelle |
+| Docker / Docker Compose | 29.1.5 | Conteneurisation |
+| Git | 2.x | Versioning |
+| API Rest Client | — | Tests des routes API |
+| DBeaver | 24.x | Interface graphique BDD |
+
+**Extensions VS Code utilisées :**
+- *Prisma* — coloration syntaxique du schéma `.prisma`
+- *ESLint* — détection des erreurs JS en temps réel
+- *Prettier* — formatage automatique du code
+- *GitLens* — visualisation de l'historique Git par ligne
+- *REST Client* — tests rapides d'API sans quitter l'éditeur
+
+---
+
+#### 1.1.2 Justification des choix techniques
+
+> **Analogie :** choisir ses outils, c'est comme choisir sa cuisine avant 
+> d'ouvrir un restaurant — chaque équipement a un rôle précis qui répond 
+> à un besoin concret du projet.
+
+**React 19 + Vite + React Router v7**
+
+React est une bibliothèque de composants qui permet de construire des 
+interfaces dynamiques sans rechargement de page. Pour Ciné Délices, 
+cette approche SPA (Single Page Application) est particulièrement adaptée : 
+la navigation entre le catalogue, la fiche recette et le back-office admin 
+est instantanée, ce qui correspond à l'expérience fluide attendue pour 
+une plateforme de consultation. Vite assure un démarrage du serveur de 
+développement quasi-instantané et un hot reload réactif, ce qui a 
+considérablement accéléré les cycles de développement de l'équipe.
+
+**Node.js 24 + Express 5**
+
+Node.js permet d'utiliser JavaScript côté serveur, ce qui signifie que 
+toute l'équipe partage le même langage sur les deux couches de 
+l'application. Express 5 fournit un cadre minimaliste pour construire 
+l'API REST : routage, middlewares, gestion des erreurs. Sa légèreté 
+nous a permis de structurer l'architecture selon nos besoins (découpage 
+en routers thématiques : recettes, auth, admin, TMDB) sans être 
+contraints par un framework plus rigide.
+
+**Prisma 6 (ORM)**
+
+Prisma joue le rôle de traducteur entre le code JavaScript et la base 
+de données PostgreSQL. Le schéma `.prisma` est la source de vérité 
+unique : il décrit toutes les tables, relations et contraintes, puis 
+génère automatiquement les types TypeScript correspondants. En pratique, 
+VS Code connaît la structure exacte de la base de données et signale 
+immédiatement toute faute de frappe sur un nom de colonne — une erreur 
+qui passerait inaperçue jusqu'à l'exécution avec un ORM classique. 
+Les migrations (`prisma migrate dev`) maintiennent un historique versionné 
+des évolutions du schéma, consultable dans Git comme n'importe quel fichier.
+
+**PostgreSQL 18**
+
+PostgreSQL est un système de gestion de base de données relationnelle 
+qui répond précisément aux besoins de Ciné Délices : le modèle de données 
+est fortement relationnel (une recette est liée à un média TMDB, 
+des ingrédients, une catégorie, un auteur). Les contraintes d'intégrité 
+référentielle (clés étrangères, contraintes composites `@@unique`) 
+garantissent la cohérence des données — par exemple, qu'un même film 
+TMDB ne soit pas enregistré deux fois, ou qu'un ingrédient ne puisse 
+pas être supprimé s'il est utilisé dans une recette publiée.
+
+**Docker 29.1.5**
+
+Docker permet à chaque membre de l'équipe de démarrer un environnement 
+de développement identique en une seule commande, quelle que soit sa 
+machine. Sans Docker, chaque développeur aurait dû installer et configurer 
+PostgreSQL manuellement, avec des risques de divergences de version ou 
+de configuration. Avec Docker Compose, les trois services (API, client, 
+base de données) démarrent ensemble avec leurs dépendances et leurs 
+variables d'environnement, dans le bon ordre (grâce au `healthcheck` 
+sur PostgreSQL).
+
+---
+
+#### 1.1.3 Processus d'installation et de configuration
+
+La documentation d'installation complète est disponible dans le `README.md` 
+à la racine du dépôt. Elle permet à tout développeur de reproduire 
+l'environnement en moins de 10 minutes sur une machine vierge.
+
+**Démarrage rapide :**
+
+```bash
+# 1. Cloner le dépôt
+git clone https://github.com/O-clock-Fusion/cines-delices.git
+cd cines-delices
+
+# 2. Configurer les variables d'environnement
+cp api/.env.example api/.env
+# → Renseigner TMDB_API_KEY et JWT_SECRET (voir section ci-dessous)
+
+# 3. Démarrer tous les services
+docker compose up
+# → API   : http://localhost:3000
+# → Client: http://localhost:5173
+# → Swagger: http://localhost:3000/api-docs
+```
+
+> Docker Compose s'occupe du reste automatiquement : installation des 
+> dépendances npm, génération des types Prisma, création des tables 
+> (`db push`), puis démarrage des serveurs de développement.
+
+**Variables d'environnement requises (`api/.env`) :**
+
+| Variable | Exemple | Description |
+|----------|---------|-------------|
+| `DATABASE_URL` | `postgresql://cinesdelices:cinesdelices@db:5432/cinesdelices` | Connexion PostgreSQL (injectée par Docker Compose) |
+| `JWT_SECRET` | `(64 chars aléatoires)` | Signature et vérification des tokens JWT |
+| `TMDB_API_KEY` | `(clé v3 TMDB gratuite)` | Accès à l'API films/séries TMDB |
+| `TMDB_BASE_URL` | `https://api.themoviedb.org/3` | URL de base de l'API TMDB |
+| `NODE_ENV` | `development` | Comportement du serveur Express |
+| `CLIENT_URL` | `http://localhost:5173` | URL autorisée par le middleware CORS |
+
+---
+
+#### 1.1.4 Conteneurisation Docker
+
+> **Analogie :** Docker, c'est livrer non seulement la recette, mais toute 
+> la cuisine équipée — garantissant que le plat sera identique sur 
+> n'importe quel plan de travail.
+
+Le fichier `docker-compose.yml` orchestre trois services avec une 
+attention particulière à l'ordre de démarrage :
+
+```yaml
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: cinesdelices
+      POSTGRES_PASSWORD: cinesdelices
+      POSTGRES_DB: cinesdelices
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cinesdelices"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    image: node:24-alpine
+    working_dir: /app
+    volumes:
+      - ./api:/app
+      - api_node_modules:/app/node_modules
+    env_file:
+      - ./api/.env
+    environment:
+      DATABASE_URL: postgresql://cinesdelices:cinesdelices@db:5432/cinesdelices
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "npm install && npx prisma generate 
+             && npx prisma db push && npm run dev"
+
+  client:
+    image: node:24-alpine
+    working_dir: /app
+    volumes:
+      - ./client:/app
+      - client_node_modules:/app/node_modules
+    environment:
+      VITE_API_PROXY_TARGET: http://api:3000
+    ports:
+      - "5173:5173"
+    command: sh -c "npm install && npm run dev -- --host"
+
+volumes:
+  api_node_modules:
+  client_node_modules:
+  db_data:
+```
+
+**Points notables de cette configuration :**
+
+- Le service `api` utilise `depends_on` avec `condition: service_healthy` : 
+  il ne démarre qu'une fois PostgreSQL prêt à accepter des connexions 
+  (vérifié par `pg_isready`). Sans ça, Prisma tenterait de se connecter 
+  avant que la base soit initialisée — comme essayer d'ouvrir un restaurant 
+  avant que la cuisine soit allumée.
+- Les volumes nommés `api_node_modules` et `client_node_modules` évitent 
+  d'écraser les `node_modules` du conteneur avec ceux de la machine hôte, 
+  qui peuvent différer (notamment si la machine hôte est Windows).
+- `VITE_API_PROXY_TARGET` permet au client de contacter l'API via le nom 
+  de service Docker (`http://api:3000`) plutôt qu'une IP, qui peut changer.
+- Le volume `db_data` est persistant : `docker compose down` ne supprime 
+  pas les données de la base (`docker compose down -v` le ferait).
+
+  ### 1.2 Développement des interfaces utilisateur
+
+#### 1.2.1 Charte graphique
+
+La charte graphique de Ciné Délices s'inspire de l'univers du cinéma 
+classique : salle obscure, projecteur doré, rideau bordeaux. Elle 
+définit un langage visuel cohérent sur l'ensemble de l'application, 
+conciliant atmosphère cinématographique, chaleur gastronomique et 
+lisibilité optimale sur fond sombre.
+
+**Palette de couleurs — couleurs principales :**
+
+| Rôle | Couleur | Hex | Usage |
+|------|---------|-----|-------|
+| Fond principal | ⬛ Noir cinéma | `#1F1D1E` | Fond de page, header, footer |
+| Accent primaire | 🟨 Or projecteur | `#C9A45C` | Titres, logo, boutons secondaires |
+| Accent secondaire | 🟥 Bordeaux rideau | `#8E1F2F` | Boutons principaux, alertes |
+| Texte sur fond sombre | 🟫 Crème parchemin | `#F6F1E8` | Corps de texte, fond ingrédients |
+| Texte foncé | 🟫 Brun profond | `#4A3428` | Texte sur fond clair |
+
+**Palette de couleurs — couleurs secondaires :**
+
+| Rôle | Couleur | Hex | Usage |
+|------|---------|-----|-------|
+| Numérotation étapes | 🟩 Vert | `#6E8B5B` | Fond ronds de numérotation, texte blanc |
+| Accent chaud | 🟨 Sable doré | `#FBDCA6` | Tags, highlights légers |
+| Fond neutre | 🟫 Beige lin | `#E8DCC8` | Fonds alternatifs, séparateurs |
+| Accent froid | 🟦 Bleu-vert | `#3A8A9A` | Éléments d'information, liens |
+
+**Règles d'utilisation :**
+
+- Fond principal → `#1F1D1E`
+- Texte sur fond sombre → `#F6F1E8`
+- Boutons principaux → background `#8E1F2F`, texte blanc, border-radius 10px
+- Boutons secondaires → background transparent, border `1px solid #C9A45C`, 
+  texte `#C9A45C`
+- Titres → `#C9A45C`
+
+**Typographie :**
+
+| Police | Usage | Caractéristiques |
+|--------|-------|-----------------|
+| **Playfair Display** | Titres, titres de sections, éléments visuels importants | Élégante, inspiration éditoriale / cinéma, contraste fort |
+| **Inter** | Texte courant, descriptions, navigation, informations recettes | Très lisible, moderne, optimisée pour UI |
+
+**Hiérarchie typographique :**
+
+| Niveau | Taille | Police |
+|--------|--------|--------|
+| H1 | 48 à 64 px | Playfair Display |
+| H2 | 32 à 40 px | Playfair Display |
+| H3 | 24 à 28 px | Playfair Display |
+| Corps | 16 à 18 px | Inter |
+| Petits labels | 12 à 14 px | Inter |
+
+> ➡️ **Annexe A** — Charte graphique complète (palette, typographie, 
+> boutons, cards, icônes, logo)
+
+---
+
+#### 1.2.2 Maquettes et wireframes
+
+La conception visuelle a suivi une progression en trois étapes — 
+comme au cinéma, on ne tourne pas sans storyboard :
+
+**Étape 1 — Zoning :** découpage en grandes zones fonctionnelles 
+(header, contenu, sidebar, footer) sans aucun détail visuel. 
+L'objectif est de valider la structure avant d'y investir du temps.
+
+**Étape 2 — Wireframes :** structure en noir et blanc. 
+On positionne les éléments, on définit la hiérarchie d'information 
+et on valide la navigation sans se laisser distraire par les couleurs. 
+C'est le plan d'architecte avant de choisir la peinture des murs.
+
+**Étape 3 — Maquettes (Mockups) :** application de la charte 
+graphique sur la structure validée : vraies couleurs, typographies 
+Playfair / Inter, images de référence, icônes définitives.
+
+**22 pages modélisées, en version Desktop (1200px) et Mobile (390px) :**
+
+| # | Page | Public cible |
+|---|------|-------------|
+| 01 | Accueil | Tous |
+| 02 | Catalogue des recettes | Tous |
+| 03 | Détail d'une recette | Tous |
+| 04 | Catalogue des films | Tous |
+| 05 | Catalogue des séries | Tous |
+| 06 | Connexion | Visiteur |
+| 07 | Inscription | Visiteur |
+| 08 | Réinitialisation du mot de passe | Visiteur |
+| 09 | Contact | Tous |
+| 10 | Mes recettes | Membre |
+| 11 | Créer / modifier une recette | Membre |
+| 12 | Profil membre | Membre |
+| 13 | Notifications | Membre / Admin |
+| 14 | Admin — Validation des recettes | Admin |
+| 15 | Admin — Toutes les recettes | Admin |
+| 16 | Mentions légales | Tous |
+| 17 | Catégorie de recettes | Tous |
+| 18 | Détail film / série | Tous |
+| 19 | Membre — Validation (retour soumission) | Membre |
+| 20 | Admin — Gérer | Admin |
+| 21 | Admin — Détail validation | Admin |
+| 22 | Admin — Ajouter une catégorie | Admin |
+
+> ➡️ **Annexe B** — 22 wireframes Desktop (WFD-01 à WFD-22)  
+> ➡️ **Annexe C** — 22 wireframes Mobile (WFM-01 à WFM-22)  
+> ➡️ **Annexe D** — 22 maquettes Desktop (MQD-01 à MQD-22)  
+> ➡️ **Annexe E** — 22 maquettes Mobile (MQM-01 à MQM-22)
+
+---
+
+#### 1.2.3 Choix ergonomiques et UX/UI
+
+**Navigation persistante avec badge dynamique :**
+La barre de navigation est présente sur toutes les pages et adapte 
+son contenu au rôle de l'utilisateur connecté (visiteur / membre / 
+admin). L'administrateur voit un badge numérique indiquant le nombre 
+de recettes en attente de modération — il ne peut pas manquer 
+une action à traiter.
+
+**Catalogue avec recherche temps réel :**
+Un debounce de 400ms est appliqué sur le champ de recherche. 
+L'application n'envoie pas une requête à chaque frappe, mais attend 
+que l'utilisateur ait fini de taper. Analogie : c'est comme un 
+serveur qui laisse le client finir sa commande avant de filer 
+en cuisine.
+
+**Workflow de création de recette (DRAFT → PENDING → PUBLISHED) :**
+Le formulaire de création est découpé en sections thématiques. 
+L'utilisateur peut sauvegarder en brouillon (DRAFT) à tout moment 
+et soumet à publication uniquement quand il est prêt. Ce statut 
+est visible en temps réel sur la page "Mes recettes" via des badges 
+colorés — l'utilisateur sait toujours où en est sa recette.
+
+**Cards de recettes immersives :**
+Chaque card affiche : image culinaire, tag catégorie, titre, 
+film ou série associé, temps de préparation, icône type (Film/Série).
+Le fond semi-transparent `rgba(0,0,0,0.6)` sur l'image préserve 
+la lisibilité du texte quelle que soit l'image.
+
+**Feedback utilisateur :**
+Chaque action (soumission, suppression, connexion) déclenche 
+un retour visuel immédiat. L'utilisateur n'est jamais dans 
+l'incertitude sur l'état de sa requête.
+
+---
+
+#### 1.2.4 Technologies front-end
+
+Le frontend est une **SPA (Single Page Application)** construite 
+avec React 19 et Vite. React Router v7 gère l'intégralité du 
+routing côté client, ce qui produit une navigation instantanée 
+entre les pages — sans rechargement, sans clignotement, 
+comme une application native.
+
+**Structure des styles — SCSS + méthodologie BEM :**
+
+BEM (Block Element Modifier) impose une convention de nommage qui 
+rend chaque classe auto-documentée :
+
+```scss
+.recipe-card { }              /* Bloc */
+.recipe-card__image { }       /* Élément : l'image de la card */
+.recipe-card__title { }       /* Élément : le titre */
+.recipe-card--featured { }    /* Modificateur : card mise en avant */
+```
+
+En lisant `.recipe-card__image`, on sait immédiatement que c'est 
+l'image appartenant au composant `recipe-card`, sans avoir à 
+chercher dans le code. Cela élimine les conflits de styles entre 
+composants dans un projet à cinq développeurs.
+
+**Variables CSS globales issues de la charte :**
+
+```scss
+:root {
+  /* Palette officielle */
+  --color-noir:     #1F1D1E;
+  --color-or:       #C9A45C;
+  --color-bordeaux: #8E1F2F;
+  --color-creme:    #F6F1E8;
+  --color-brun:     #4A3428;
+  --color-vert:     #6E8B5B;
+  --color-sable:    #FBDCA6;
+  --color-beige:    #E8DCC8;
+  --color-teal:     #3A8A9A;
+
+  /* Typographie */
+  --font-titre: 'Playfair Display', Georgia, serif;
+  --font-corps: 'Inter', sans-serif;
+}
+```
+
+---
+
+#### 1.2.5 Responsive — approche Mobile First
+
+L'application est pensée **Mobile First** : on conçoit d'abord 
+pour le plus petit écran (390px), puis on enrichit pour les écrans 
+plus larges. C'est plus robuste que l'inverse — retirer des 
+éléments d'un design desktop sur mobile génère souvent des 
+incohérences.
+
+| Breakpoint | Largeur | Adaptations principales |
+|------------|---------|------------------------|
+| Mobile | < 768px | Navigation hamburger, grille 1 colonne, formulaires pleine largeur |
+| Tablette | 768px – 1024px | Grille 2 colonnes, sidebar réduite |
+| Desktop | > 1024px | Grille 3–4 colonnes, sidebar complète, navbar horizontale |
+
+```scss
+/* Mobile first : base pour mobile */
+.catalog-grid {
+  display: grid;
+  grid-template-columns: 1fr;   /* 1 colonne */
+  gap: var(--gap-md);
+}
+/* On enrichit progressivement */
+@media (min-width: 768px) {
+  .catalog-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 1024px) {
+  .catalog-grid { grid-template-columns: repeat(3, 1fr); }
+}
+```
+
+---
+
+#### 1.2.6 Accessibilité (RGAA / WCAG 2.1 AA)
+
+Le RGAA a été intégré dès la phase de conception, pas ajouté 
+en fin de projet.
+
+**Contrastes :**
+Le ratio entre le texte crème `#F6F1E8` et le fond noir `#1F1D1E` 
+atteint **14.8:1**, bien au-delà du minimum WCAG de 4.5:1. 
+Les boutons bordeaux `#8E1F2F` sur fond crème respectent également 
+ce critère.
+
+**Autres mesures implémentées :**
+- Alternatives textuelles (`alt`) sur toutes les images ; 
+  `alt=""` pour les images décoratives
+- Navigation clavier complète (Tab, Entrée, Échap)
+- Labels de formulaire associés via `htmlFor` / `id`
+- Attributs ARIA : `aria-label`, `aria-live` (messages d'erreur), 
+  `aria-expanded` (menu hamburger)
+
+```jsx
+<label htmlFor="recipe-title">Titre de la recette *</label>
+<input
+  id="recipe-title"
+  type="text"
+  aria-required="true"
+  aria-describedby="title-error"
+/>
+{error && (
+  <span id="title-error" role="alert" aria-live="polite">
+    {error}
+  </span>
+)}
+```
+
+---
+
+#### 1.2.7 Performances — résultats Lighthouse (27 avril 2026)
+
+Les performances ont fait l'objet d'un travail d'optimisation 
+spécifique, notamment sur mobile : conversion des images en WebP 
+avec Sharp, code splitting par route (React `lazy` / `Suspense`), 
+et headers de cache HTTP via Caddyfile en production.
+
+**Scores obtenus sur l'URL de production :**
+
+| Métrique | Desktop | Mobile |
+|----------|---------|--------|
+| Performances | 98 | 78 |
+| Accessibilité | 97 | 96 |
+| Bonnes pratiques | 96 | 100 |
+| SEO | 92 | 92 |
+
+Le score de performance mobile (78) est plus bas que le desktop 
+(98), ce qui est habituel : le simulateur Lighthouse mobile 
+applique une limitation CPU et réseau qui pénalise les 
+applications riches. Les pistes d'amélioration identifiées 
+sont la réduction du LCP (Largest Contentful Paint) et 
+l'optimisation du TBT (Total Blocking Time).
+
+> ➡️ **Annexe F** — Captures d'écran complètes des rapports 
+> Lighthouse Desktop et Mobile
+
+---
+
+#### 1.2.8 Validation des champs et sécurité front-end
+
+**Validation côté client :**
+La validation côté client offre un retour immédiat à l'utilisateur 
+sans aller-retour serveur. Elle ne remplace pas la validation 
+serveur (voir section 1.3) — elle la précède.
+
+| Champ | Règle | Message affiché |
+|-------|-------|-----------------|
+| Titre recette | Requis, 3–100 caractères | "Le titre doit contenir entre 3 et 100 caractères" |
+| Catégorie | Sélection obligatoire | "Veuillez choisir une catégorie" |
+| Temps (préparation/cuisson) | Entier positif, max 9999 min | "Valeur invalide" |
+| Ingrédients | Au moins 1 requis | "Ajoutez au moins un ingrédient" |
+| Email | Format RFC 5322 | "Format d'email invalide" |
+| Mot de passe | Min 8 chars, 1 majuscule, 1 chiffre | "Le mot de passe ne respecte pas les critères" |
+
+**Protection XSS :**
+React échappe automatiquement tout contenu affiché via JSX — 
+`{variable}` est converti en entités HTML avant rendu, ce qui 
+neutralise les tentatives d'injection de scripts. 
+Le projet n'utilise `dangerouslySetInnerHTML` nulle part, 
+éliminant ce vecteur d'attaque par conception.
+
+**Affichage conditionnel selon le rôle :**
+Les composants sensibles (boutons admin, options de modération) 
+ne sont rendus dans le DOM que si l'utilisateur possède 
+le rôle `admin`. Un visiteur qui inspecterait le code source 
+ne verrait pas ces éléments.
+
+```jsx
+{user?.role === 'admin' && (
+  <AdminPanel />   // jamais rendu pour un membre ou visiteur
+)}
+```
+
+
+
+### 1.3 Développement des composants métier
+
+#### 1.3.1 Architecture des composants
+
+L'application est découpée selon le principe de **séparation des responsabilités** : chaque couche a un rôle précis et ne fait que ça.  
+Analogie : dans un restaurant, le cuisinier cuisine, le serveur sert, le caissier encaisse — personne ne fait tout à la fois.
+
+**Architecture back-end — flux d'une requête HTTP :**
+
+```
+Requête HTTP entrante
+  │
+  ├── app.js          → middlewares globaux (Helmet, CORS, rate-limit)
+  ├── routes/*.js     → déclaration des endpoints REST
+  ├── middlewares/    → authMiddleware, adminMiddleware, validation Zod
+  ├── controllers/    → logique métier (une fonction = une responsabilité)
+  └── lib/prisma.js   → accès base de données via Prisma ORM
+          │
+          └── PostgreSQL
+```
+
+**Architecture front-end — organisation React :**
+
+```
+src/
+  ├── pages/          → composants de haut niveau (1 page = 1 fichier)
+  ├── components/     → composants réutilisables (Navbar, RecipeCard...)
+  ├── context/        → AuthContext (état global d'authentification)
+  ├── api/            → fonctions fetch centralisées (apiClient.js)
+  ├── utils/          → fonctions utilitaires partagées
+  └── styles/         → SCSS global + variables CSS
+```
+
+> ➡️ **Annexe G** — Diagramme d'architecture complet (schéma des couches front ↔ back ↔ BDD)
+
+---
+
+#### 1.3.2 Patterns de conception implémentés
+
+**Pattern Repository / Service Layer (back-end)**
+
+Les controllers ne contiennent pas de requêtes Prisma brutes. L'accès aux données passe par des fonctions dédiées — si la logique de récupération d'une recette change, on modifie un seul endroit, pas tous les controllers qui en ont besoin.
+
+**Pattern Context / Provider (front-end)**
+
+L'état d'authentification est géré par un `AuthContext` React. Tous les composants qui ont besoin de savoir "qui est connecté" lisent ce contexte sans que l'information soit passée manuellement de parent en enfant (prop drilling).  
+Analogie : c'est un tableau d'affichage commun que tous les employés peuvent consulter — personne n'a besoin qu'on lui transmette l'information individuellement.
+
+```jsx
+// context/AuthContext.jsx
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+
+  // Chargement du user au démarrage si token présent
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) setUser(parseJwt(token));
+  }, []);
+
+  return (
+    <AuthContext.Provider value={{ user, setUser }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+// Dans n'importe quel composant :
+const { user } = useAuth(); // accès direct, sans props
+```
+
+**Pattern Middleware Chain (back-end)**
+
+Les middlewares s'enchaînent comme des filtres successifs. Une route admin passe obligatoirement par deux contrôles avant d'atteindre le controller :
+
+```javascript
+// Route protégée admin — 3 couches de contrôle
+router.patch(
+  '/:id/publish',
+  authMiddleware,    // 1. Vérifie que le JWT est valide → injecte req.user
+  adminMiddleware,   // 2. Vérifie que req.user.role === 'ADMIN'
+  publishRecipe      // 3. Seulement ici : logique métier
+);
+```
+
+**Pattern Observer — Notifications in-app**
+
+Quand un événement métier se produit (recette soumise, validée, refusée), une notification est créée en base de données via un `upsert` Prisma. Le frontend interroge régulièrement l'API pour afficher le badge de notification en temps réel.
+
+---
+
+#### 1.3.3 Règles métier — workflow de publication
+
+Le cycle de vie d'une recette suit un **workflow à 3 statuts** strictement contrôlé par l'API.  
+Analogie : c'est la chaîne éditoriale d'un journal — le journaliste (membre) écrit un brouillon, le soumet à la rédaction, et le rédacteur en chef (admin) décide de publier ou de renvoyer en correction.
+
+```
+DRAFT ──[soumettre]──► PENDING ──[valider]──► PUBLISHED
+  ▲                        │
+  └────────[refuser]────────┘  (avec motif de refus)
+```
+
+**Règles d'intégrité :**
+
+- Un membre ne peut soumettre que ses propres recettes (`RG-03` — vérification d'ownership)
+- Un membre ne peut supprimer que ses recettes `DRAFT` ou `PENDING` — jamais une recette `PUBLISHED`
+- Seul un `ADMIN` peut passer une recette de `PENDING` à `PUBLISHED` ou la rejeter
+- En cas de refus, un `rejectionReason` est stocké et une notification est envoyée au membre
+
+```javascript
+// api/src/controllers/recipesController.js — submit
+export async function submitRecipe(req, res) {
+  const recipe = await prisma.recipe.findUnique({
+    where: { id: req.params.id }
+  });
+
+  // RG-03 : vérification d'ownership
+  if (recipe.userId !== req.user.id)
+    throw new AppError(403, 'Cette recette ne vous appartient pas');
+
+  // Seule une recette DRAFT peut être soumise
+  if (recipe.status !== 'DRAFT')
+    throw new AppError(400, 'Seule une recette DRAFT peut être soumise');
+
+  await prisma.recipe.update({
+    where: { id: recipe.id },
+    data: { status: 'PENDING' }
+  });
+
+  // Notification admin via upsert (évite les doublons)
+  await prisma.notification.upsert({
+    where:  { recipeId: recipe.id },
+    update: { read: false },
+    create: { recipeId: recipe.id, type: 'PENDING_REVIEW' }
+  });
+
+  res.json({ message: 'Recette soumise à validation' });
+}
+```
+
+---
+
+#### 1.3.4 Création d'une recette — fonctionnement complet
+
+La création d'une recette est la fonctionnalité la plus complexe de l'application : elle implique le formulaire React, l'upload d'image, l'intégration TMDB, la gestion des ingrédients avec fuzzy search, et la gestion du temps.
+
+**Flux complet :**
+
+```
+Membre remplit le formulaire
+  │
+  ├── 1. Titre, description, catégorie  → validation Zod côté serveur
+  ├── 2. Image                          → Multer (mémoire) → Sharp → WebP
+  ├── 3. Média TMDB                     → autocomplétion debounce 400ms
+  ├── 4. Ingrédients                    → fuzzy search + normalisation singulier
+  ├── 5. Temps prépa / cuisson          → parser multi-formats → minutes
+  └── 6. Statut                         → DRAFT (sauvegarde) ou PENDING (soumission)
+```
+
+**Gestion du temps de préparation et cuisson :**
+
+Le champ temps accepte plusieurs formats naturels et les convertit en minutes entiers stockés en base :
+
+```javascript
+// api/src/utils/timeParser.js
+// "45min" → 45  |  "1h30" → 90  |  "1:30" → 90  |  "2h" → 120
+export function parseTimeToMinutes(input) {
+  const hm = input.match(/(\d+)h\s*(\d+)?/);
+  if (hm) return parseInt(hm[1]) * 60 + parseInt(hm[2] || 0);
+  const m = input.match(/(\d+)\s*min/);
+  if (m) return parseInt(m[1]);
+  const colon = input.match(/(\d+):(\d+)/);
+  if (colon) return parseInt(colon[1]) * 60 + parseInt(colon[2]);
+  return parseInt(input) || 0;
+}
+```
+
+À l'affichage, les minutes sont reconverties en format lisible : `90 min → "1h 30min"`.
+
+**Fuzzy search sur les ingrédients :**
+
+Quand un membre tape un ingrédient, deux requêtes successives sont effectuées pour éviter la création de doublons :
+
+```
+"citon" tapé
+  │
+  ├── Requête 1 : contains("citon")    → [] vide
+  │
+  ├── < 3 résultats ? OUI
+  │
+  ├── Requête 2 : contains("cit")      → ["citron", "citronnade"]
+  │              (3 premières lettres comme filet de sécurité)
+  │
+  └── Tri par distance de Levenshtein
+        → citron      distance 1  ✅ suggéré en #1
+        → citronnade  distance 5  — en #2
+```
+
+La distance de Levenshtein mesure le nombre de modifications (ajout, suppression, substitution d'un caractère) pour passer d'un mot à l'autre. "citon" → "citron" = 1 insertion = distance 1.
+
+**Normalisation au singulier :**
+
+Pour éviter les doublons `citron` / `citrons`, tout ingrédient est normalisé au singulier à la saisie : le `s` final est supprimé automatiquement si le mot se termine par `s` (avec une liste d'exceptions pour les mots naturellement pluriels).
+
+**Upload et optimisation d'image :**
+
+```javascript
+// Pipeline Multer (mémoire) → Sharp → WebP
+// L'image ne touche jamais le disque en format original
+const upload = multer({ storage: multer.memoryStorage() });
+
+export async function processImage(buffer) {
+  return sharp(buffer)
+    .resize(800, 600, { fit: 'cover' })
+    .webp({ quality: 80 })    // conversion WebP : -70% de poids
+    .toBuffer();
+}
+```
+
+> ➡️ **Annexe H** — Diagramme de séquence : création d'une recette (formulaire → API → BDD)
+
+---
+
+#### 1.3.5 Système de notifications
+
+L'application implémente un double système de notifications : **in-app** (temps réel dans l'interface) et **email** (Nodemailer via Mailtrap en développement, Brevo en production).
+
+**Notifications in-app :**
+
+| Événement | Destinataire | Message |
+|-----------|-------------|---------|
+| Recette soumise (PENDING) | Admin | Badge + "Nouvelle recette à valider" |
+| Recette publiée (PUBLISHED) | Membre auteur | "Votre recette a été publiée ✅" |
+| Recette refusée (DRAFT) | Membre auteur | "Votre recette a été refusée : [motif]" |
+| Ingrédient invalidé | Membre auteur | Message détaillé de l'admin |
+
+**Emails applicatifs (Nodemailer) :**
+
+| Email | Déclencheur | Destinataire |
+|-------|------------|-------------|
+| Réinitialisation mot de passe | `POST /api/auth/forgot-password` | Membre demandeur |
+| Confirmation changement MDP | `PATCH /api/users/me/password` | Membre connecté |
+| Prévenance inactivité (11 mois) | CRON — lundi 3h00 | Membres inactifs |
+| Suppression compte (12 mois) | CRON — lundi 3h00 | Membres supprimés |
+
+**Architecture du système d'emails :**
+
+```
+app.js
+  └── startInactivityCron()      ← démarre au boot
+        └── cron : chaque lundi 3h00
+              └── checkInactiveAccounts()
+                    ├── 12+ mois → purgeInactiveAccount()
+                    │     ├── sendEmail(buildDeletionEmail) ← AVANT suppression
+                    │     └── prisma.$transaction(
+                    │           delete DRAFT/PENDING recipes,
+                    │           delete User
+                    │         )
+                    └── 11-12 mois → sendEmail(buildWarningEmail)
+```
+
+> **Important :** l'email de suppression est envoyé **avant** la suppression du compte — une fois le compte supprimé, l'adresse email n'est plus disponible.
+
+**Configuration SMTP selon l'environnement :**
+
+| Variable | Développement (Mailtrap) | Production (Brevo) |
+|----------|--------------------------|-------------------|
+| `SMTP_HOST` | `sandbox.smtp.mailtrap.io` | `smtp-relay.brevo.com` |
+| `SMTP_PORT` | `587` | `587` |
+| `SMTP_USER` | Identifiant Mailtrap | Identifiant Brevo |
+| `SMTP_PASS` | Mot de passe Mailtrap | Clé API Brevo |
+
+Mailtrap est une "boîte aux lettres fictive" en développement : les emails sont capturés et visibles dans une interface web, sans jamais atteindre de vraie boîte mail. Analogie : c'est un simulateur de vol — on teste sans risque réel.
+
+---
+
+#### 1.3.6 Sécurisation des composants métier
+
+**Routes sensibles protégées :**
+
+Chaque route sensible est protégée par la chaîne de middlewares appropriée avant d'atteindre le controller :
+
+```javascript
+// Routes publiques : aucun middleware
+router.get('/api/recipes', getCatalog);
+
+// Routes membre : JWT requis
+router.post('/api/recipes', authMiddleware, createRecipe);
+router.patch('/api/recipes/:id/submit', authMiddleware, submitRecipe);
+
+// Routes admin : JWT + rôle ADMIN
+router.patch('/api/admin/recipes/:id/publish',
+  authMiddleware, adminMiddleware, publishRecipe);
+router.post('/api/admin/ingredients/merge',
+  authMiddleware, adminMiddleware, mergeIngredients);
+```
+
+**Validation des données côté serveur (Zod) :**
+
+Toutes les données reçues du client sont validées avec Zod avant d'être traitées. Zod ne fait pas confiance au frontend — même si la validation côté client a déjà eu lieu. Analogie : c'est le contrôle de sécurité à l'aéroport — même si tu as déjà été vérifié à l'entrée, on contrôle à nouveau avant l'embarquement.
+
+```javascript
+// Schéma de validation Zod pour la création de recette
+const createRecipeSchema = z.object({
+  title:       z.string().min(3).max(100),
+  description: z.string().min(10).max(2000),
+  categoryId:  z.number().int().positive(),
+  prepTime:    z.number().int().min(0).max(9999),
+  cookTime:    z.number().int().min(0).max(9999),
+  servings:    z.number().int().min(1).max(100),
+});
+// Une donnée invalide → erreur 400 automatique, jamais de crash
+```
+
+**Gestion propre des erreurs back-end :**
+
+Une classe `AppError` centralisée garantit que les erreurs techniques (stack traces, détails SQL) ne sont jamais exposées au client :
+
+```javascript
+// Handler global Express — intercepte toutes les erreurs
+app.use((err, req, res, next) => {
+  const code = err.statusCode || 500;
+  const msg  = err.statusCode
+    ? err.message                        // erreur métier → message lisible
+    : 'Une erreur interne est survenue'; // erreur technique → message générique
+  res.status(code).json({ error: msg });
+  // La stack trace n'est JAMAIS envoyée au client
+});
+```
+
+**Vérification des droits sur les actions :**
+
+Chaque action sensible vérifie l'ownership avant exécution. Un membre ne peut pas modifier ou supprimer la recette d'un autre membre, même en connaissant son ID :
+
+```javascript
+// Vérification ownership sur toute modification de recette
+const recipe = await prisma.recipe.findUnique({ where: { id } });
+if (!recipe)              throw new AppError(404, 'Recette introuvable');
+if (recipe.userId !== req.user.id)
+                          throw new AppError(403, 'Accès interdit');
+```
+
+**Gestion des secrets :**
+
+Aucune clé API, mot de passe ou secret JWT n'est versionné dans Git. Toutes les valeurs sensibles sont dans des fichiers `.env` exclus via `.gitignore`. Le fichier `.env.example` documente les variables nécessaires sans leurs valeurs réelles.
+
+> ➡️ **Annexe I** — Tableau complet des routes API avec niveaux d'accès (Public / Membre / Admin)
+
+---
+
+## Récapitulatif des annexes — sections 1.1 à 1.3
+
+| Annexe | Contenu | Section |
+|--------|---------|---------|
+| A | Charte graphique complète | 1.2.1 |
+| B | 22 wireframes Desktop (WFD-01 à WFD-22) | 1.2.2 |
+| C | 22 wireframes Mobile (WFM-01 à WFM-22) | 1.2.2 |
+| D | 22 maquettes Desktop (MQD-01 à MQD-22) | 1.2.2 |
+| E | 22 maquettes Mobile (MQM-01 à MQM-22) | 1.2.2 |
+| F | Rapports Lighthouse Desktop et Mobile | 1.2.7 |
+| G | Diagramme d'architecture des couches | 1.3.1 |
+| H | Diagramme de séquence — création d'une recette | 1.3.4 |
+| I | Tableau complet des routes API | 1.3.6 |
+
+
+---
+
+---
+
+## Bloc 1 — Développer une application sécurisée
+
+### 1.4 Gestion de projet
+
+#### 1.4.1 Méthodologie — Scrum adapté
+
+L'équipe a adopté la méthodologie **Scrum** adaptée au contexte pédagogique de la formation O'Clock.
+
+Analogie : Scrum, c'est comme préparer un grand repas à 5 cuisiniers. On divise le menu en plats (sprints), chaque cuisinier prend en charge sa partie, et on goûte ensemble à la fin de chaque service (revue de sprint). Si un plat rate, on ajuste la recette au sprint suivant — sans tout recommencer depuis le début.
+
+La règle adoptée par l'équipe : **chaque sprint se termine par un livrable déployé**. Tests et déploiement font partie intégrante de la définition de "fini" (Definition of Done) — pas seulement du code qui tourne en local.
+
+**Cérémonies Scrum pratiquées :**
+
+| Cérémonie | Fréquence | Mon rôle (Scrum Master) |
+|-----------|-----------|-------------------------|
+| Sprint Planning | Début de chaque sprint (vendredi) | Animation, création des issues avec labels, attribution |
+| Daily Standup | Quotidien (15 min) | Facilitation, identification des blocages |
+| Sprint Review / Démo | Fin de sprint (vendredi) | Présentation du travail accompli, démo live devant l'équipe pédagogique |
+| Rétrospective | Fin de sprint | Identification des améliorations (Keep / Stop / Start) |
+
+---
+
+#### 1.4.2 Planning et suivi des tâches
+
+**Calendrier officiel de l'Apothéose (fourni par O'Clock) :**
+
+| Jalon | Date | Événement |
+|-------|------|-----------|
+| Lancement S0 | Lundi 09/03/2026 | Matinée certif + lancement Apothéose (Sprint 0 — conception) |
+| Suivi hebdo | Mercredi 11/03/2026 | Point de suivi intermédiaire |
+| Lancement S1 + rétro S0 | Vendredi 13/03/2026 | Démarrage Sprint 1 + rétrospective Sprint 0 |
+| Suivi hebdo | Mercredi 18/03/2026 | Point de suivi intermédiaire |
+| Lancement S2 + rétro S1 | Vendredi 20/03/2026 | Démarrage Sprint 2 + rétrospective Sprint 1 |
+| Suivi hebdo | Mercredi 25/03/2026 | Point de suivi intermédiaire |
+| Lancement S3 + rétro S2 | Vendredi 27/03/2026 | Démarrage Sprint 3 + rétrospective Sprint 2 |
+| Jour des démos | Vendredi 03/04/2026 | Présentation finale devant jury |
+
+> ➡️ **Annexe J** — Planning Apothéose complet
+
+**Organisation en 4 sprints :**
+
+| Sprint | Période | Focus principal | Ma contribution |
+|--------|---------|-----------------|-----------------|
+| Sprint 0 | Mars 2026 | Conception, architecture, maquettes, MCD/MLD/MPD | Dossier de conception, User Stories MoSCoW, MCD Mocodo, rôles équipe |
+| Sprint 1 | 13 → 19/03/2026 | Back-end + Front-end + tests + déploiement | Schéma Prisma + seed, auth JWT+Argon2, middlewares, RGPD 3 volets, Sharp, déploiement Render |
+| Sprint 2 | 20 → 26/03/2026 | Finalisation fonctionnalités + correctifs + tests + déploiement | Fuzzy search, merge ingrédients, parser temps, notifications, seed v4, migration Railway |
+| Sprint 3 | 27/03 → 03/04/2026 | Polish, correctifs finaux, déploiement production stable | Correctifs images/ingrédients, déconnexion, refactoring, CI/CD GitHub Actions, 3 READMEs |
+
+**Organisation du Kanban — mon rôle (Sprint 2) :**
+
+Pour le Sprint 2, j'ai pris en charge la création et l'organisation complète du board : toutes les issues ont été créées et labellisées. Chaque membre s'est ensuite auto-assigné les tâches selon ses disponibilités et compétences au fil de la semaine — sans attribution forcée top-down.
+
+**Labels structurés utilisés :**
+
+| Label | Signification |
+|-------|---------------|
+| `BACK` | Tâche back-end (API, base de données) |
+| `FRONT` | Tâche front-end (React, SCSS) |
+| `CRITIQUE` | Bloquant — à traiter en priorité absolue |
+| `CORRECTION` | Correctif sur du code existant |
+| `NEW` | Nouvelle fonctionnalité |
+| `DEPLOY` | Tâche de déploiement |
+| `SWAGGER` | Documentation API Swagger |
+| `DOCUMENTATION` | Documentation non-technique |
+| `LUNDI` / `MARDI` / `MERCREDI` / `JEUDI` / `VENDREDI` | Jour cible dans le sprint |
+
+**Colonnes du board Kanban :**
+
+```
+Backlog → Todo → In Progress → PR (Pull Request ouverte) → Test → Done
+```
+
+**Répartition des tâches par membre (Sprints 1 & 2) :**
+
+Les rôles ci-dessous correspondent aux responsabilités définies lors du Sprint 0. Hameni Abanya a participé exclusivement au Sprint 0 (conception et wireframes).
+
+| Membre | Rôle | Responsabilités |
+|--------|------|-----------------|
+| **Nathalie Leduc** | Fullstack / Scrum Master | Animation des cérémonies Scrum (sprint planning, daily, rétrospective), facilitation de la communication, supervision du backlog. Conception et développement de l'architecture serveur, définition du schéma de base de données, développement fullstack, rédaction des tests unitaires et d'intégration côté API. |
+| **Hameni Abanya** | Lead Backend (Sprint 0 uniquement) | A participé exclusivement au Sprint 0. |
+| **Vincent Duverger** | Lead Frontend | Mise en place de l'architecture frontend, création du design system (composants réutilisables, tokens visuels SCSS/BEM), garantie du responsive et de la conformité accessibilité WCAG/RGAA. |
+| **Orianne Jaunet** | Fullstack | Développement de fonctionnalités couvrant toute la pile technique, intégration des services externes, tests automatisés (Vitest + Testing Library), audits qualité, implémentation de la sécurité (authentification, autorisation). |
+| **Emilie Vatelin** | Fullstack | Développement de fonctionnalités fullstack, contribution à toutes les couches de l'application (UI, logique métier, API), participation aux revues de code. |
+
+> ➡️ **Annexe K** — Kanban complet Cinés Délices (Sprints 1, 2 et 3)
+
+---
+
+#### 1.4.3 Gestion des versions Git
+
+**Stratégie de branches — Trunk-based adapté :**
+
+```
+main          ← production uniquement (Railway auto-deploy sur push)
+  └── develop ← branche de travail commune — base de toutes les features
+        ├── feat/auth-jwt              ← Authentification JWT + Argon2
+        ├── feat/recipes-crud          ← CRUD recettes back-end
+        ├── feat/tmdb-proxy            ← Intégration API TMDB
+        ├── feat/front-catalogue       ← Catalogue + fiche recette React
+        ├── feat/front-create-recipe   ← Formulaire création recette
+        ├── fix/fuzzy-ingredients      ← Correctif fuzzy search
+        ├── refactor/recipe-utils      ← Centralisation utils
+        └── chore/ci-github-actions    ← Pipeline CI/CD
+```
+
+Analogie : `main` c'est le livre publié, `develop` c'est le brouillon commun de l'équipe, et chaque branche `feat/` c'est un auteur qui rédige son chapitre en parallèle — sans perturber les autres.
+
+**Convention de commits (Conventional Commits) :**
+
+| Préfixe | Usage | Exemple |
+|---------|-------|---------|
+| `feat:` | Nouvelle fonctionnalité | `feat: add fuzzy search on ingredients` |
+| `fix:` | Correction de bug | `fix: prevent duplicate ingredient creation` |
+| `refactor:` | Refactoring sans changement de comportement | `refactor: centralize recipe utils` |
+| `chore:` | Config, dépendances, outillage | `chore: add github actions workflow` |
+| `docs:` | Documentation uniquement | `docs: update README deployment section` |
+| `test:` | Ajout ou modification de tests | `test: add vitest for CreateRecipe component` |
+
+Cette convention rend l'historique Git lisible comme un journal de bord : en parcourant les commits, on comprend l'évolution du projet sans ouvrir un seul fichier.
+
+**Workflow Pull Request :**
+
+1. Créer une branche depuis `develop` : `git checkout -b feat/nom-feature`
+2. Développer et tester localement
+3. Ouvrir une Pull Request vers `develop` sur GitHub
+4. Review obligatoire par au moins un autre membre de l'équipe
+5. Merge uniquement si la review est approuvée et les checks CI sont verts
+6. Suppression de la branche après merge
+
+**Remotes configurés :**
+
+L'école fournit un repo partagé pour toute la promotion Francfort (Pas de fork possible). J'ai configuré un second remote personnel pointant vers mon fork pour pouvoir pousser et déclencher les déploiements Railway :
+
+```bash
+# Remote de l'équipe O'Clock 
+git remote add origin https://github.com/O-clock-Francfort/cines-delices.git
+
+# Remote personnel — mon fork (push + déploiement Railway)
+git remote add perso https://github.com/Nathalie-Leduc/cines-delices.git
+
+# Flux typique :
+git pull origin develop           # récupérer les changements de l'équipe
+git checkout -b feat/ma-feature   # créer sa branche
+# ... développement ...
+git push perso feat/ma-feature    # pousser sur mon fork
+# → ouvrir une PR depuis le fork vers origin/develop sur GitHub
+```
+
+---
+
+#### 1.4.4 Collaboration et communication
+
+| Outil | Usage |
+|-------|-------|
+| **GitHub Projects** (Kanban) | Board avec colonnes : Backlog / Todo / In Progress / PR / Test / Done |
+| **GitHub Issues + Labels** | Une tâche = une issue. Labels structurés (BACK/FRONT/CRITIQUE/NEW/JOUR) pour l'auto-assignation |
+| **GitHub Pull Requests** | Code review — 1 approbation minimum avant merge dans `develop` |
+| **Discord** | Communication quotidienne, partage de liens, résolution de blocages |
+| **Swagger UI** (`/api-docs`) | Documentation vivante de l'API — consultable par toute l'équipe sans installation |
+
+---
+
+#### 1.4.5 Mise en place du repository GitHub
+
+La structure du repository a été construite progressivement au fil des sprints.
+
+**Sprint 0 — structure initiale :**
+- Dossiers `api/` et `client/`
+- `.gitignore` complet (`.env`, `node_modules/`, `dist/`, images WebP générées)
+- `.env.example` dans chaque service pour documenter les variables sans exposer leurs valeurs
+- `README.md` racine : présentation du projet, stack, commandes de démarrage
+
+**Sprint 3 — documentation complète (réalisée par moi) :**
+- `api/README.md` — documentation de l'API (routes, variables, scripts, sécurité)
+- `client/README.md` — documentation du frontend (structure, rôles des dossiers, dépannage)
+- `.github/workflows/ci.yml` — pipeline CI/CD (4 jobs : lint-client, test-client, lint-api, test-api-integration)
+
+```
+cines-delices/
+├── .github/
+│   └── workflows/
+│       └── ci.yml            ← créé par moi (Sprint 3)
+├── api/
+│   ├── .env.example
+│   ├── README.md             ← créé par moi (Sprint 3)
+│   └── src/
+├── client/
+│   ├── .env.example
+│   ├── README.md             ← créé par moi (Sprint 3)
+│   └── src/
+├── .gitignore
+├── docker-compose.yml
+└── README.md                 ← présent dès le Sprint 0
+```
+
+---
+
+#### 1.4.6 Workflow Git choisi
+
+Le workflow retenu est un **trunk-based development simplifié**, adapté à une équipe de 5 personnes sur 4 semaines :
+
+- `main` stable, déployé automatiquement sur Railway à chaque push
+- `develop` intègre le travail continu de toute l'équipe
+- Branches courtes (2–3 jours max) par feature ou correctif
+- Pas de branches `release/` ou `hotfix/` — la cadence des sprints suffit
+
+Ce choix a été préféré à Gitflow, trop lourd en branches parallèles pour une période aussi courte, et au commit direct sur `main`, trop risqué sans filet de sécurité. Analogie : c'est un restaurant avec une cuisine de préparation (`develop`) et un comptoir de service (`main`) — on ne sert jamais directement depuis les plans de travail.
+
+---
+
+#### 1.4.7 Gestion des secrets et fichiers sensibles
+
+Aucun secret n'est versionné dans Git. La protection opère à trois niveaux :
+
+**Niveau 1 — `.gitignore` (développement) :**
+```bash
+.env          # variables d'environnement locales
+node_modules/ # dépendances installées
+dist/         # build généré
+*.webp        # images converties par Sharp
+```
+
+**Niveau 2 — Variables Railway (production) :**  
+Les secrets sont injectés directement dans l'interface Railway, par service (API et Client séparément), sans jamais toucher le code source.
+
+**Niveau 3 — GitHub Secrets (CI/CD) :**
+```yaml
+# ci.yml — la valeur réelle n'apparaît jamais dans les logs
+env:
+  API_BASE_URL: ${{ secrets.API_BASE_URL }}
+```
+
+---
+
+#### 1.4.8 Historique Git — évolution du projet
+
+L'historique Git reflète fidèlement l'évolution sprint par sprint. Quelques commits représentatifs :
+
+```bash
+# Sprint 0 — Fondations
+chore: initial project setup with Docker and Prisma schema
+docs:  add conception dossier, MCD, user stories
+
+# Sprint 1 — Back-end + premières features front
+feat:  add JWT auth with Argon2 password hashing
+feat:  add recipe CRUD with ownership check RG-03
+feat:  add RGPD inactivity CRON with Nodemailer
+feat:  add rate limiter on all routes
+feat:  add Sharp WebP image pipeline (-70% weight)
+
+# Sprint 2 — Correctifs + features avancées
+feat:  add fuzzy search on ingredients (Levenshtein)
+feat:  add ingredient merge for admin
+fix:   force singular on ingredient names
+fix:   admin notification upsert
+feat:  add time parser (45min / 1h30 / 1:30 → minutes)
+chore: seed v4 with real TMDB data
+
+# Sprint 3 — Polish + déploiement final
+chore: add GitHub Actions CI pipeline (4 jobs)
+fix:   lighthouse mobile — code splitting + lazy loading
+docs:  add api/README.md and client/README.md
+chore: add Caddyfile HTTP cache headers for Railway
+```
+
+> ➡️ **Annexe J** — Planning Apothéose complet  
+> ➡️ **Annexe K** — Kanban complet (Sprints 1, 2, 3)  
+> ➡️ **Annexe L** — Graphe de l'historique Git (branches et merges)
+
+## Bloc 2 — Concevoir et développer une application sécurisée organisée en couches
+
+### 2.1 Analyse des besoins
+
+#### 2.1.1 Besoins fonctionnels et techniques
+
+L'analyse des besoins a été conduite lors du Sprint 0 à partir d'ateliers d'équipe et d'une étude du cahier des charges. Elle a permis d'identifier trois grandes catégories de besoins.
+
+**Besoins des visiteurs (non connectés) :**
+- Consulter le catalogue de recettes, le filtrer par catégorie et le rechercher par titre ou film/série associé
+- Accéder au détail complet d'une recette (ingrédients, étapes, temps, média associé)
+- Parcourir les catalogues de films et séries ayant des recettes associées
+- Créer un compte et se connecter
+
+**Besoins des membres (connectés) :**
+- Créer, modifier et supprimer ses propres recettes
+- Enregistrer une recette en brouillon (DRAFT) avant soumission
+- Soumettre une recette à validation (PENDING)
+- Suivre le statut de ses recettes et recevoir des notifications
+- Gérer son profil et supprimer son compte (droit à l'oubli RGPD)
+
+**Besoins de l'administrateur :**
+- Valider ou refuser les recettes soumises, avec motif de refus
+- Gérer les catégories, les ingrédients (validation, fusion de doublons), les membres
+- Consulter les notifications de soumission en temps réel
+
+**Contraintes techniques identifiées :**
+- Application mobile-first, responsive sur 3 tailles d'écran
+- Conformité RGPD (consentement cookies, droit à l'oubli, mentions légales)
+- Intégration de l'API externe TMDB pour les données films/séries
+- Protection de la clé API TMDB via proxy serveur
+- Performances Lighthouse ≥ 90 en desktop
+
+> ➡️ **Annexe M** — Cahier des charges complet (Sprint 0)
+
+---
+
+#### 2.1.2 Cahier des charges et spécifications
+
+Les spécifications fonctionnelles ont été formalisées sous forme de **User Stories** classées selon la méthode MoSCoW (Must / Should / Could / Won't), permettant de prioriser le périmètre du MVP.
+
+**Extrait des User Stories principales :**
+
+| Priorité | Acteur | En tant que... je veux... afin de... |
+|----------|--------|--------------------------------------|
+| Must | Visiteur | Consulter le catalogue de recettes afin de découvrir les recettes disponibles |
+| Must | Visiteur | Rechercher une recette par titre ou film afin de trouver rapidement ce que je cherche |
+| Must | Visiteur | Créer un compte afin d'accéder à l'espace membre |
+| Must | Membre | Créer une recette avec image, ingrédients et étapes afin de partager ma création |
+| Must | Membre | Soumettre ma recette à validation afin qu'elle soit publiée sur le catalogue |
+| Must | Admin | Valider ou refuser une recette soumise afin de modérer le contenu |
+| Should | Membre | Recevoir une notification quand ma recette est publiée ou refusée afin d'être informé |
+| Should | Membre | Associer un film ou une série à ma recette via TMDB afin d'enrichir le contenu |
+| Should | Visiteur | Réinitialiser mon mot de passe par email afin de récupérer mon accès |
+| Could | Admin | Fusionner des ingrédients en doublon afin de maintenir la cohérence de la base |
+
+> ➡️ **Annexe N** — User Stories complètes avec critères d'acceptation (MoSCoW)
+
+---
+
+### 2.2 Architecture logicielle
+
+#### 2.2.1 Description de l'architecture
+
+Ciné Délices repose sur une **architecture multicouche découplée** : le frontend et le backend sont deux applications indépendantes qui communiquent exclusivement via une API REST. Cette séparation est fondamentale — elle permet de faire évoluer l'une sans impacter l'autre, et ouvre la possibilité d'une application mobile future consommant la même API.
+
+Analogie : c'est comme un restaurant avec une salle et une cuisine séparées. Les clients (React) ne rentrent pas en cuisine (Node.js) — ils passent commande via le serveur (API REST) et reçoivent leur plat.
+
+**Vue d'ensemble de l'architecture :**
+
+```
+┌─────────────────────────────────────────────────────┐
+│  CLIENT — React 19 + Vite (SPA)                      │
+│  React Router v7 · SCSS/BEM · AuthContext            │
+│  Déployé sur Railway (service client)                │
+└────────────────────┬────────────────────────────────┘
+                     │ HTTPS — JSON (API REST)
+                     │ VITE_API_URL
+┌────────────────────▼────────────────────────────────┐
+│  API — Node.js 24 + Express 5                        │
+│  Middlewares → Routers → Controllers → Prisma        │
+│  Déployé sur Railway (service api)                   │
+└────────────────────┬────────────────────────────────┘
+                     │ Prisma ORM
+┌────────────────────▼────────────────────────────────┐
+│  BASE DE DONNÉES — PostgreSQL 18                     │
+│  9 tables · UUID · Migrations versionnées            │
+│  Déployé sur Railway (service PostgreSQL)            │
+└─────────────────────────────────────────────────────┘
+                     │
+┌────────────────────▼────────────────────────────────┐
+│  API EXTERNE — TMDB (The Movie Database)             │
+│  Proxy via le serveur Node.js (clé jamais exposée)  │
+└─────────────────────────────────────────────────────┘
+```
+
+**Architecture back-end en couches (MVC) :**
+
+Chaque requête HTTP traverse une chaîne de responsabilités bien définie :
+
+```
+Requête HTTP
+  │
+  ├── app.js            Middlewares globaux : Helmet, CORS, rate-limit
+  ├── routes/*.js       Déclaration des endpoints REST
+  ├── middlewares/      authMiddleware, adminMiddleware, validation Zod
+  ├── controllers/      Logique métier (une fonction = une responsabilité)
+  └── lib/prisma.js     Accès base de données via Prisma ORM
+                │
+                └── PostgreSQL 18
+```
+
+> ➡️ **Annexe O** — Diagramme d'architecture complet (composants + déploiement)
+
+---
+
+#### 2.2.2 Aspects de sécurité dans l'architecture
+
+La sécurité a été intégrée dès la conception, selon le principe de **défense en profondeur** : plusieurs couches de protection indépendantes, de sorte qu'une faille sur une couche ne compromette pas l'ensemble.
+
+| Couche | Mesure | Menace couverte |
+|--------|--------|-----------------|
+| Réseau | HTTPS en production (Railway) | Interception des communications |
+| Serveur | Helmet.js (headers HTTP sécurisés) | XSS, clickjacking, MIME sniffing |
+| Accès | Rate-limit (5 tentatives/15min sur auth) | Brute force sur le login |
+| Auth | JWT signé (HS256, expiration 7j) | Usurpation d'identité |
+| Mot de passe | Argon2id (résistant GPU, OWASP recommandé) | Vol de base de données |
+| Données | Zod (validation côté serveur) | Injection de données malformées |
+| BDD | Prisma ORM (requêtes paramétrées) | Injection SQL |
+| Secrets | Variables d'environnement Railway | Exposition de clés API |
+| TMDB | Proxy serveur | Exposition de la clé API TMDB au client |
+| RGPD | Tarteaucitron.js + mentions légales | Non-conformité CNIL |
+
+---
+
+### 2.3 Conception de la base de données
+
+#### 2.3.1 MCD — Modèle Conceptuel de Données
+
+Le MCD a été réalisé avec l'outil **Mocodo** lors du Sprint 0. Il modélise les entités métier et leurs associations au niveau conceptuel, sans aucune considération technique (pas d'identifiant, pas de type de données).
+
+Les entités principales identifiées sont : **UTILISATEUR**, **RECETTE**, **CATEGORIE**, **MEDIA** (film ou série TMDB), **INGREDIENT**, **GENRE**, **NOTIFICATION**.
+
+Les associations principales :
+- Un UTILISATEUR crée 0 à N RECETTES ; une RECETTE est créée par 1 UTILISATEUR
+- Une RECETTE appartient à 1 CATEGORIE ; une CATEGORIE regroupe 0 à N RECETTES
+- Une RECETTE est inspirée de 0 ou 1 MEDIA ; un MEDIA inspire 0 à N RECETTES
+- Une RECETTE contient 1 à N INGREDIENTS (association avec quantité et unité)
+- Un MEDIA appartient à 0 à N GENRES ; un GENRE regroupe 0 à N MEDIAS
+
+> ➡️ **Annexe P** — MCD complet (Mocodo)
+
+---
+
+#### 2.3.2 MLD — Modèle Logique de Données
+
+Le MLD traduit le MCD en tables relationnelles avec clés primaires et étrangères, sans préciser les types de données (niveau technique SGBD).
+
+```
+users          (__id__, email, pseudo, nom, password_hash, role,
+                created_at, last_login_at, reset_token, reset_token_expires)
+
+categories     (__id__, nom, description, color)
+
+genres         (__id__, nom, tmdb_id)
+
+media          (__id__, tmdb_id, titre, type, slug, poster_url,
+                synopsis, annee, realisateur, created_at)
+
+media_genres   (__#media_id__, __#genre_id__)           ← pivot N:N
+
+recipes        (__id__, titre, slug, image_url, instructions,
+                nombre_personnes, temps_preparation, temps_cuisson,
+                status, rejection_reason,
+                #user_id → users (SET NULL),
+                #category_id → categories (RESTRICT),
+                #media_id → media (RESTRICT),
+                created_at, updated_at)
+
+ingredients    (__id__, nom, approved)
+
+recipe_ingredients  (__#recipe_id → recipes (CASCADE)__,
+                     __#ingredient_id → ingredients (RESTRICT)__,
+                     quantity, unit)                    ← pivot N:N
+
+notifications  (__id__, type, message, is_read,
+                #user_id → users (CASCADE),
+                #recipe_id → recipes (SET NULL),
+                created_at)
+```
+
+**Règles de suppression (onDelete) :**
+
+| Relation | Politique | Justification |
+|----------|-----------|---------------|
+| `users → recipes` (userId) | SET NULL | Les recettes PUBLISHED survivent à la suppression du compte — droit à l'oubli sans censure du contenu |
+| `recipes → recipe_ingredients` | CASCADE | Pas d'ingrédient orphelin — cohérence logique |
+| `categories → recipes` | RESTRICT | Impossible de supprimer une catégorie utilisée — intégrité référentielle |
+| `media → recipes` | RESTRICT | Un film ne peut pas être supprimé tant qu'il a des recettes associées |
+| `users → notifications` | CASCADE | Les notifications n'ont aucun sens sans leur destinataire — nettoyage RGPD automatique |
+| `recipes → notifications` | SET NULL | L'historique de notification reste visible même si la recette est supprimée |
+
+> ➡️ **Annexe Q** — MLD complet + MPD (schéma Prisma et script SQL)
+
+---
+
+#### 2.3.3 Sécurité et protection des données (RGPD)
+
+La conformité RGPD a été traitée à trois niveaux :
+
+**Niveau 1 — Consentement et cookies :**
+La bibliothèque Tarteaucitron.js gère le bandeau de consentement CNIL. Le JWT d'authentification est déclaré comme cookie technique (ne nécessite pas de consentement), les autres cookies analytiques sont soumis à consentement explicite.
+
+**Niveau 2 — Droit à l'oubli :**
+La suppression de compte efface toutes les données personnelles (email, pseudo, mot de passe hashé). Les recettes PUBLISHED sont conservées avec `userId` mis à NULL et l'auteur affiché comme "Ancien membre" — le contenu public n'est pas censuré, mais l'identité est protégée.
+
+**Niveau 3 — Gestion de l'inactivité (CRON) :**
+Un job planifié vérifie chaque lundi à 3h00 les comptes inactifs. À 11 mois d'inactivité, un email de prévenance est envoyé. À 12 mois, le compte est automatiquement supprimé conformément aux recommandations CNIL.
+
+**Stockage sécurisé des mots de passe :**
+Les mots de passe sont hashés avec **Argon2id**, algorithme recommandé par l'OWASP comme premier choix en 2024. Aucun mot de passe n'est jamais stocké en clair. Argon2id est résistant aux attaques GPU grâce à sa consommation mémoire intentionnellement élevée (64 MiB par hash).
+
+---
+
+### 2.4 Composants d'accès aux données
+
+#### 2.4.1 ORM Prisma — utilisation et implémentation
+
+Prisma 7 est l'ORM utilisé pour abstraire l'accès à PostgreSQL. Le fichier `schema.prisma` constitue la **source de vérité unique** de la base de données : il décrit toutes les tables, relations et contraintes, et génère automatiquement les types TypeScript correspondants.
+
+Analogie : Prisma est le traducteur entre le JavaScript et le SQL. Au lieu d'écrire `SELECT * FROM recipes WHERE id = $1`, on écrit `prisma.recipe.findUnique({ where: { id } })` — plus lisible, typé, et impossible à injecter.
+
+```javascript
+// Exemple : récupération du catalogue avec pagination et filtres
+const recipes = await prisma.recipe.findMany({
+  where: {
+    status: 'PUBLISHED',
+    ...(categoryId && { categoryId }),
+    ...(search && {
+      OR: [
+        { title: { contains: search, mode: 'insensitive' } },
+        { media: { title: { contains: search, mode: 'insensitive' } } },
+      ]
+    }),
+  },
+  include: {
+    category: true,
+    media:    true,
+    user:     { select: { pseudo: true } },
+  },
+  orderBy: { createdAt: 'desc' },
+  skip:  (page - 1) * limit,
+  take:  limit,
+});
+```
+
+**Avantages concrets de Prisma sur ce projet :**
+- VS Code détecte immédiatement toute faute de frappe sur un nom de colonne
+- Les migrations sont versionnées dans Git comme n'importe quel fichier
+- Les relations sont déclarées une fois dans le schéma, jamais à réécrire dans les requêtes
+
+---
+
+#### 2.4.2 Gestion des transactions
+
+Les opérations qui modifient plusieurs tables simultanément utilisent des transactions Prisma — si l'une des opérations échoue, toutes sont annulées. Analogie : c'est comme un virement bancaire — soit les deux comptes sont mis à jour, soit aucun ne l'est.
+
+```javascript
+// Exemple : fusion de deux ingrédients (merge admin)
+// Toutes les recettes utilisant l'ancien ingrédient pointent vers le nouveau,
+// puis l'ancien ingrédient est supprimé — en une seule transaction atomique.
+await prisma.$transaction([
+  prisma.recipeIngredient.updateMany({
+    where:  { ingredientId: sourceId },
+    data:   { ingredientId: targetId },
+  }),
+  prisma.ingredient.delete({
+    where: { id: sourceId },
+  }),
+]);
+```
+
+---
+
+### 2.5 Documentation technique
+
+#### 2.5.1 Documentation de l'API (Swagger / OpenAPI)
+
+L'API REST est documentée avec **Swagger UI** (OpenAPI 3.0), accessible à l'adresse `/api-docs` en développement et en production. La documentation est générée automatiquement à partir des commentaires JSDoc au-dessus de chaque route.
+
+Elle permet à tout développeur de consulter et tester les endpoints sans outil externe :
+
+```javascript
+/**
+ * @swagger
+ * /api/recipes:
+ *   get:
+ *     summary: Catalogue des recettes publiées
+ *     tags: [Recettes]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: search
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Liste paginée des recettes PUBLISHED
+ */
+router.get('/', getCatalog);
+```
+
+> ➡️ **Annexe R** — Capture de l'interface Swagger UI (`/api-docs`)
+
+#### 2.5.2 Documentation du code source
+
+Le code source est documenté à trois niveaux :
+
+**Commentaires inline** : les fonctions complexes sont documentées en détail, à la fois par des commentaires dans le code et par des documents dédiés placés en annexe :
+
+- **Fuzzy search des ingrédients** — algorithme à deux requêtes (contains exact + contains préfixe) avec tri par distance de Levenshtein et normalisation au singulier
+- **Parser de temps** — conversion de formats libres (`45min`, `1h30`, `1:30`) en minutes entières stockées en base, avec reconversion à l'affichage
+- **Pipeline Sharp/WebP** — traitement Multer mémoire → Sharp → WebP avec redimensionnement et compression, sans écriture du fichier original sur le disque
+
+> ➡️ **Annexe S** — Documentation technique : Fuzzy search des ingrédients  
+> ➡️ **Annexe T** — Documentation technique : Parser de temps  
+> ➡️ **Annexe U** — Documentation technique : Pipeline Sharp/WebP
+
+**README par service** : trois fichiers README couvrent respectivement la racine du projet (stack, démarrage, déploiement), l'API (routes, variables d'environnement, scripts) et le client (structure, rôles des dossiers, dépannage).
+
+**Schéma Prisma auto-documenté** : le fichier `schema.prisma` sert de documentation vivante de la base de données — chaque modèle, relation et contrainte y est déclaré explicitement.
+
+---
+
+### 2.6 Organisation en couches et interopérabilité
+
+#### 2.6.1 Architecture multicouche
+
+L'application respecte une **architecture multicouche** avec trois niveaux bien identifiés :
+
+| Couche | Technologie | Responsabilité |
+|--------|-------------|----------------|
+| **Présentation** | React 19 + React Router v7 | Affichage, navigation, interactions utilisateur |
+| **Logique métier** | Node.js + Express 5 + Controllers | Règles métier, workflow, validation, sécurité |
+| **Accès aux données** | Prisma 7 + PostgreSQL 18 | Persistance, transactions, intégrité référentielle |
+
+Chaque couche communique uniquement avec la couche adjacente : le frontend ne parle jamais directement à la base de données, et les controllers ne génèrent jamais de HTML.
+
+#### 2.6.2 Mécanismes d'interopérabilité
+
+**API REST (JSON) :**
+L'interface entre frontend et backend est une API REST qui échange des données au format JSON. Chaque endpoint respecte les conventions HTTP : verbes (`GET`, `POST`, `PATCH`, `DELETE`), codes de statut (`200`, `201`, `400`, `401`, `403`, `404`, `409`), et headers appropriés (`Content-Type: application/json`).
+
+**Proxy TMDB :**
+L'API externe TMDB est consommée côté serveur via un proxy Express. Le frontend ne connaît jamais la clé API TMDB — il appelle `/api/tmdb/medias/search?q=matrix` et le serveur fait l'appel TMDB en arrière-plan. C'est comme un intermédiaire qui protège l'identité du fournisseur.
+
+```javascript
+// Route proxy TMDB — la clé API n'est jamais exposée au client
+router.get('/medias/search', authMiddleware, async (req, res) => {
+  const response = await fetch(
+    `${process.env.TMDB_BASE_URL}/search/multi?query=${req.query.q}`,
+    { headers: { Authorization: `Bearer ${process.env.TMDB_API_KEY}` } }
+  );
+  const data = await response.json();
+  res.json(data); // seules les données utiles sont retransmises
+});
+```
+
+**Format des réponses API :**
+Toutes les réponses suivent une structure cohérente, facilitant la consommation côté React :
+
+```json
+// Succès
+{ "data": [...], "total": 42, "page": 1, "limit": 12 }
+
+// Erreur
+{ "error": "Message explicite pour le développeur" }
+```
+
+
+
+---
+
+## Bloc 3 — Préparer le déploiement d'une application sécurisée
+
+### 3.1 Stratégie de déploiement
+
+#### 3.1.1 Environnements
+
+L'application est déployée sur trois environnements distincts, chacun avec ses propres variables de configuration :
+
+| Environnement | Infrastructure | Usage |
+|---------------|---------------|-------|
+| **Développement** | Docker Compose (local) | Développement quotidien, tests manuels |
+| **Test / Intégration** | API Railway (production) | Tests d'intégration automatisés via CI/CD |
+| **Production** | Railway (3 services) | Application accessible aux utilisateurs |
+
+En développement, Docker Compose orchestre trois conteneurs : l'API Node.js, le client React/Vite et PostgreSQL. Le lancement complet tient en une commande :
+
+```bash
+docker compose up   # démarre API + client + PostgreSQL
+```
+
+En production, les trois services sont déployés sur Railway comme des services indépendants qui communiquent entre eux via le réseau interne Railway. Railway n'utilise pas Docker Compose mais son propre système Nixpacks pour construire les images.
+
+> ➡️ **Annexe V** — Guide de déploiement Railway complet (étapes pas à pas)
+
+---
+
+#### 3.1.2 Configuration par environnement
+
+Les configurations sont séparées strictement par environnement via les variables d'environnement. Aucune valeur de production n'apparaît dans le code source.
+
+**Développement (`.env` local) :**
+
+| Variable | Valeur développement |
+|----------|---------------------|
+| `DATABASE_URL` | `postgresql://cinesdelices:cinesdelices@db:5432/cinesdelices` |
+| `NODE_ENV` | `development` |
+| `JWT_SECRET` | Valeur locale (non partagée) |
+| `TMDB_API_KEY` | Clé personnelle du développeur |
+| `SMTP_HOST` | `sandbox.smtp.mailtrap.io` (emails capturés, jamais envoyés) |
+| `VITE_API_URL` | `http://localhost:3000` |
+
+**Production (Railway — variables injectées par l'interface Railway) :**
+
+| Variable | Usage |
+|----------|-------|
+| `DATABASE_URL` | URL PostgreSQL interne Railway (générée automatiquement) |
+| `NODE_ENV` | `production` |
+| `JWT_SECRET` | Chaîne aléatoire 64 caractères |
+| `TMDB_API_KEY` | Clé API TMDB de l'équipe |
+| `API_BASE_URL` | URL publique du service API Railway |
+| `CLIENT_URL` | URL publique du service client Railway |
+| `SMTP_HOST` | Serveur Brevo (envoi réel d'emails) |
+| `VITE_API_URL` | URL publique de l'API (injectée au build Vite) |
+
+**Point critique — `VITE_API_URL` :**  
+Vite injecte les variables d'environnement au moment du **build**, pas au runtime. Si `VITE_API_URL` n'est pas définie avant le build, toutes les requêtes API pointent vers `localhost:3000` en production — une erreur invisible jusqu'au déploiement. Cette contrainte a été identifiée lors du premier déploiement Render et documentée dans le guide.
+
+---
+
+#### 3.1.3 Sécurité du déploiement
+
+**HTTPS en production :**  
+Railway fournit automatiquement un certificat TLS pour chaque service déployé. Toutes les communications entre le client et l'API se font en HTTPS — les données ne transitent jamais en clair.
+
+**Principe de moindre privilège :**  
+Chaque service Railway n'a accès qu'aux variables dont il a besoin. Le service client n'a pas accès aux variables de l'API (`JWT_SECRET`, `DATABASE_URL`), et vice versa.
+
+**Secrets dans le pipeline CI/CD :**  
+Les secrets utilisés par GitHub Actions (URL de l'API Railway, `DATABASE_URL` pour le seed de test) sont stockés dans GitHub → Settings → Secrets → Actions. Ils ne sont jamais visibles dans les logs du pipeline.
+
+```yaml
+# ci.yml — référence sécurisée, valeur jamais exposée
+env:
+  API_BASE_URL: ${{ secrets.API_BASE_URL }}
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+```
+
+**Caddyfile — cache HTTP en production :**  
+Un fichier `Caddyfile` configure les headers de cache HTTP pour les assets statiques en production, sans exposer d'informations sensibles sur l'infrastructure :
+
+```
+:80 {
+  encode gzip
+  root * /srv
+  file_server
+
+  header /assets/* {
+    Cache-Control "public, max-age=31536000, immutable"
+  }
+  header *.webp {
+    Cache-Control "public, max-age=86400"
+  }
+
+  try_files {path} /index.html
+}
+```
+
+---
+
+### 3.2 Tests de l'application
+
+#### 3.2.1 Stratégie de tests — pyramide
+
+La stratégie de tests suit la **pyramide de tests** classique :
+
+```
+         ▲
+        / \          Tests E2E (manuels)
+       /   \         Parcours complets navigateur
+      /─────\
+     /       \       Tests d'intégration
+    /         \      Endpoints API réels (Railway)
+   /───────────\
+  /             \    Tests unitaires
+ /               \   Logique métier isolée (Vitest + node:assert)
+/─────────────────\
+```
+
+**Justification de ce périmètre :**  
+Les tests unitaires couvrent la logique métier critique (parsing, normalisation, formatage) — celle qui peut produire des bugs silencieux difficiles à détecter manuellement. Les tests d'intégration vérifient que les routes API se comportent correctement de bout en bout, y compris les règles de sécurité. Les tests E2E sont manuels car l'interface utilisateur change fréquemment en sprint et le coût d'automatisation n'est pas justifié à ce stade.
+
+---
+
+#### 3.2.2 Outils et frameworks utilisés
+
+| Outil | Couche | Usage |
+|-------|--------|-------|
+| **Vitest** | Front-end (client) | Tests unitaires sur les utilitaires React |
+| **Testing Library** | Front-end (client) | Tests de composants React (affichage, comportement) |
+| **node:test + node:assert** | Back-end (API) | Tests d'intégration des routes (module natif Node.js 24) |
+| **API Rest Client** (VS Code) | Back-end | Tests manuels des endpoints pendant le développement |
+
+---
+
+#### 3.2.3 Tests unitaires back-end — logique métier critique
+
+Les tests unitaires back-end ciblent les fonctions de `recipeUtils.js` et `timeParser.js` — des utilitaires partagés dont une régression silencieuse affecterait immédiatement l'expérience utilisateur.
+
+```javascript
+// api/tests/unit/recipeUtils.test.js — node:test + node:assert
+import { describe, it } from 'node:test';
+import assert from 'node:assert';
+import {
+  parseTimeToMinutes,
+  normalizeIngredientName,
+  formatMinutes,
+} from '../../src/utils/recipeUtils.js';
+
+describe('parseTimeToMinutes', () => {
+  it('entier pur',   () => assert.strictEqual(parseTimeToMinutes('70'), 70));
+  it('1h30',         () => assert.strictEqual(parseTimeToMinutes('1h30'), 90));
+  it('1h',           () => assert.strictEqual(parseTimeToMinutes('1h'), 60));
+  it('30min',        () => assert.strictEqual(parseTimeToMinutes('30min'), 30));
+  it('1:30',         () => assert.strictEqual(parseTimeToMinutes('1:30'), 90));
+  it('vide → null',  () => assert.strictEqual(parseTimeToMinutes(''), null));
+  it('abc → null',   () => assert.strictEqual(parseTimeToMinutes('abc'), null));
+});
+
+describe('normalizeIngredientName', () => {
+  it('citrons → citron', () => assert.strictEqual(normalizeIngredientName('citrons'), 'citron'));
+  it('riz inchangé',     () => assert.strictEqual(normalizeIngredientName('riz'), 'riz'));
+  it('noix inchangé',    () => assert.strictEqual(normalizeIngredientName('noix'), 'noix'));
+  it('Tomates → tomate', () => assert.strictEqual(normalizeIngredientName('Tomates'), 'tomate'));
+});
+
+describe('formatMinutes', () => {
+  it('45 → 45 min', () => assert.strictEqual(formatMinutes(45), '45 min'));
+  it('60 → 1h',     () => assert.strictEqual(formatMinutes(60), '1h'));
+  it('90 → 1h30',   () => assert.strictEqual(formatMinutes(90), '1h30'));
+});
+```
+
+---
+
+#### 3.2.4 Tests des routes API principales
+
+Les tests d'intégration frappent directement l'API Railway déployée, sans mock. Ils valident le comportement réel de bout en bout, incluant la base de données, les middlewares et les règles de sécurité.
+
+**Suites de tests d'intégration (node:assert) :**
+
+| Suite | Routes testées | Cas couverts |
+|-------|----------------|--------------|
+| Auth | POST /register, POST /login | Inscription valide, email dupliqué, mot de passe faible, connexion invalide |
+| Recettes | GET /recipes, GET /recipes/:slug, POST /recipes | Catalogue paginé, filtres, accès non authentifié |
+| Workflow | PATCH /recipes/:id/submit, PATCH /admin/recipes/:id/publish | DRAFT→PENDING→PUBLISHED, ownership RG-03 |
+| Admin | GET /admin/recipes/pending, POST /admin/ingredients/merge | Accès réservé ADMIN, fusion ingrédients |
+| Sécurité | Toutes les routes protégées | JWT manquant (401), rôle insuffisant (403), SQL injection, XSS headers |
+| RGPD | DELETE /users/me | Suppression compte + SET NULL recettes publiées |
+| Ingrédients | GET /ingredients/search | Fuzzy search, normalisation singulier |
+
+---
+
+#### 3.2.5 Données de test isolées
+
+Les tests d'intégration utilisent des données isolées et reproductibles :
+
+- Un **seed de test** (`ensureTestUsers`) crée ou réinitialise les comptes de test (membre, admin) avant chaque run
+- Les données créées pendant les tests (recettes, ingrédients) utilisent des identifiants uniques horodatés pour éviter les collisions
+- La base de données Railway de production est utilisée pour les tests d'intégration — les données de test sont nettoyées en fin de run
+
+---
+
+#### 3.2.6 Tests front-end — composants clés
+
+Les tests Vitest + Testing Library ciblent les composants React dont un bug aurait un impact direct sur l'expérience utilisateur.
+
+```javascript
+// client/src/utils/recipeUtils.test.js — Vitest
+import { describe, it, expect } from 'vitest';
+import { parseTimeToMinutes, normalizeIngredientName, formatMinutes }
+  from './recipeUtils';
+
+describe('parseTimeToMinutes', () => {
+  it('1h30 → 90',         () => expect(parseTimeToMinutes('1h30')).toBe(90));
+  it('30min → 30',        () => expect(parseTimeToMinutes('30min')).toBe(30));
+  it('vide → null',       () => expect(parseTimeToMinutes('')).toBeNull());
+});
+
+describe('normalizeIngredientName', () => {
+  it('citrons → citron',  () => expect(normalizeIngredientName('citrons')).toBe('citron'));
+  it('Tomates → tomate',  () => expect(normalizeIngredientName('Tomates')).toBe('tomate'));
+});
+```
+
+**Composants testés :**
+- États d'affichage (chargement, erreur, contenu vide, succès)
+- Formulaires (validation, messages d'erreur, soumission)
+- Affichage conditionnel selon le rôle (boutons admin/membre)
+
+---
+
+#### 3.2.7 Tests de sécurité
+
+Les tests de sécurité vérifient les protections contre les vulnérabilités du Top 10 OWASP 2025 :
+
+| Vulnérabilité OWASP | Test effectué | Résultat |
+|---------------------|--------------|----------|
+| **A01 — Broken Access Control** | Appels aux routes admin sans token / avec token membre | 401 / 403 retournés ✅ |
+| **A02 — Cryptographic Failures** | Vérification que les mots de passe ne sont pas stockés en clair | Hash Argon2id en BDD ✅ |
+| **A03 — Injection** | Injection SQL via les paramètres de recherche | Prisma paramétrise toutes les requêtes ✅ |
+| **A05 — Security Misconfiguration** | Vérification des headers HTTP (X-Frame-Options, CSP...) | Helmet configuré ✅ |
+| **A07 — Auth Failures** | Token JWT expiré, token falsifié, token absent | 401 dans tous les cas ✅ |
+| **A08 — Data Integrity** | Modification d'une recette appartenant à un autre membre | 403 Forbidden ✅ |
+
+Les headers de sécurité sont vérifiés automatiquement dans le pipeline CI :
+
+```javascript
+// test-api-security.js — vérification des headers Helmet
+const res = await fetch(`${API}/api/health`);
+assert.ok(res.headers.get('x-frame-options'),         'X-Frame-Options manquant');
+assert.ok(res.headers.get('x-content-type-options'),  'X-Content-Type-Options manquant');
+assert.ok(res.headers.get('strict-transport-security'),'HSTS manquant');
+```
+
+---
+
+#### 3.2.8 Justification du périmètre et lien avec les risques métier
+
+**Ce qui est testé et pourquoi :**
+
+- **Parser de temps et normalisation des ingrédients** — une régression silencieuse sur ces fonctions affecterait toutes les recettes du catalogue sans message d'erreur visible
+- **Workflow DRAFT→PENDING→PUBLISHED** — c'est le cœur métier de l'application ; un bug ici bloquerait la contribution des membres
+- **Règles d'ownership (RG-03)** — une régression permettrait à un membre de modifier la recette d'un autre, avec des conséquences légales potentielles
+- **Routes admin** — un accès non autorisé au back-office est le risque de sécurité le plus critique du projet
+
+**Ce qui n'est pas testé automatiquement et pourquoi :**
+
+- Les tests E2E (Cypress, Playwright) n'ont pas été mis en place — le coût d'implémentation et de maintenance dépasse le bénéfice sur une période de sprint de 4 semaines
+- L'interface graphique est testée manuellement à chaque sprint review
+
+---
+
+#### 3.2.9 Couverture, limites et bug détecté grâce aux tests
+
+**Couverture actuelle :**
+- Utilitaires `recipeUtils.js` et `timeParser.js` : couverture complète des cas nominaux et cas limites
+- Routes API critiques : 7 suites de tests d'intégration
+- Composants React : utilitaires et affichage conditionnel
+
+**Limites identifiées :**
+- Pas de tests automatisés sur les composants de formulaire complexes (CreateRecipe)
+- Les tests d'intégration frappent la base de production — un seed de données de test dédié serait plus robuste
+
+**Exemple concret de bug détecté grâce aux tests :**  
+Un test unitaire sur `normalizeIngredientName` a révélé que le mot "bœuf" était incorrectement normalisé (le `œ` était mal géré par la règle de suppression du `s` final). Le bug aurait été invisible en tests manuels car aucun testeur n'avait saisi ce mot spécifiquement. La correction a été appliquée avant toute mise en production.
+
+---
+
+### 3.3 Documentation et déploiement
+
+#### 3.3.1 Documentation technique
+
+La documentation technique est répartie à plusieurs niveaux :
+
+- **Ce dossier de projet** — architecture, choix techniques, modélisation, sécurité, tests, déploiement
+- **Swagger UI (`/api-docs`)** — documentation interactive de toutes les routes API, accessible en production
+- **3 fichiers README** — racine (stack + démarrage rapide), `api/` (routes + variables + scripts), `client/` (structure + dépannage)
+- **Schéma Prisma (`schema.prisma`)** — source de vérité de la base de données, versionné avec le code
+- **Annexes thématiques** — documentation détaillée des fonctions complexes (fuzzy search, parser temps, Sharp)
+
+> ➡️ **Annexe V** — Guide de déploiement Railway complet  
+> ➡️ **Annexe W** — Capture de l'interface Swagger UI en production
+
+---
+
+#### 3.3.2 Stratégie de déploiement — pipeline complet
+
+**Architecture de déploiement Railway :**
+
+```
+GitHub (push sur main/perso)
+  │
+  ├── GitHub Actions (CI)
+  │     ├── lint-client      → ESLint React/Vite
+  │     ├── test-client      → Vitest (76 tests unitaires)
+  │     ├── lint-api         → ESLint Node.js
+  │     └── test-api-integration → node:assert (API Railway)
+  │
+  └── Railway (CD automatique)
+        ├── service API    → Nixpacks → build Node.js → deploy
+        ├── service Client → Nixpacks → build Vite → Caddy
+        └── PostgreSQL     → persistant (volume Railway)
+```
+
+**Étapes manuelles vs automatisées :**
+
+| Étape | Manuel | Automatisé |
+|-------|--------|------------|
+| Push du code | ✅ | |
+| Lint et tests | | ✅ GitHub Actions |
+| Build Docker/Nixpacks | | ✅ Railway |
+| Migration Prisma | | ✅ (`prisma migrate deploy` au démarrage) |
+| Déploiement API | | ✅ Railway webhook |
+| Déploiement client | | ✅ Railway webhook |
+| Seed initial | ✅ (une seule fois) | |
+
+**Rollback :**  
+Railway conserve l'historique des déploiements et permet de revenir à n'importe quelle version précédente en un clic depuis l'interface. Analogie : c'est le bouton "annuler" du déploiement — si la v2 casse, on revient à la v1 en 30 secondes.
+
+---
+
+#### 3.3.3 Configuration des environnements
+
+La séparation des configurations est assurée par la variable `NODE_ENV` :
+
+```javascript
+// api/src/app.js — comportement adapté selon l'environnement
+const isProduction = process.env.NODE_ENV === 'production';
+
+// En production : logs minimalistes, pas de stack traces exposées
+// En développement : logs détaillés, messages d'erreur complets
+app.use((err, req, res, next) => {
+  const code = err.statusCode || 500;
+  res.status(code).json({
+    error: err.statusCode ? err.message : 'Une erreur interne est survenue',
+    ...(isProduction ? {} : { stack: err.stack }), // stack visible seulement en dev
+  });
+});
+```
+
+---
+
+### 3.4 Démarche DevOps
+
+#### 3.4.1 Pipeline CI/CD — GitHub Actions
+
+J'ai mis en place le pipeline CI/CD après l'Apothose. Il s'exécute automatiquement à chaque push sur `main` ou `develop`, et sur chaque Pull Request vers ces branches.
+
+**Architecture du pipeline (4 jobs) :**
+
+```
+push / PR        ┌─ ① lint-client      ESLint React/Vite    ┐
+sur main ou      ├─ ② test-client      Vitest (76 tests)     ├── parallèles
+develop          └─ ③ lint-api         ESLint Node.js        ┘
+                          │
+                          ▼ (si ①②③ verts)
+push seulement   └─ ④ test-api-integration   node:assert sur API Railway
+                          sleep 30s → seed → tests → sécurité
+```
+
+**Déclencheurs :**
+
+| Événement | Jobs lancés |
+|-----------|-------------|
+| Push sur `main` ou `develop` | Jobs ①②③ en parallèle → job ④ si tous verts |
+| Pull Request vers `main` ou `develop` | Jobs ①②③ uniquement (pas d'intégration) |
+| Push sur autre branche | Aucun job |
+
+Les tests d'intégration ne tournent pas sur les PRs pour éviter de polluer la base de données de production à chaque revue de code.
+
+---
+
+#### 3.4.2 Automatisations en place
+
+Au moins **4 automatisations** sont actives dans le projet :
+
+**① Lint automatique à chaque push :**  
+ESLint vérifie la qualité du code côté API et client — une erreur de syntaxe ou une mauvaise pratique bloque le pipeline avant même les tests.
+
+**② Tests automatiques à chaque push :**  
+76 tests Vitest côté client + suites node:assert côté API tournent automatiquement. Un test qui échoue bloque le merge dans `main`.
+
+**③ Déploiement continu Railway :**  
+À chaque push sur la branche liée au service Railway, l'application est automatiquement reconstruite et redéployée — sans intervention manuelle.
+
+**④ Migrations Prisma automatiques :**  
+Au démarrage du service API en production, `prisma migrate deploy` applique automatiquement toutes les migrations en attente — la base de données est toujours synchronisée avec le code.
+
+**⑤ Nettoyage des builds CI (concurrency) :**  
+Si deux pushes arrivent rapidement, le pipeline annule automatiquement le run obsolète et ne garde que le plus récent :
+
+```yaml
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+```
+
+---
+
+#### 3.4.3 Gestion des versions et des releases
+
+Le versioning suit la convention **Semantic Versioning** (SemVer) appliquée via les tags Git :
+
+- `v1.0.0` — première version stable déployée sur Railway
+- `v1.1.0` — ajout fuzzy search + merge ingrédients (Sprint 2)
+- `v1.2.0` — optimisations Lighthouse + CI/CD (Sprint 3)
+
+Chaque sprint review correspond à une version taguée, permettant un rollback précis si nécessaire.
+
+---
+
+#### 3.4.4 Sécurisation du pipeline de déploiement
+
+**Secrets jamais dans le code :**  
+Toutes les valeurs sensibles (clés API, `DATABASE_URL`, `JWT_SECRET`) sont stockées dans GitHub Secrets et Railway Variables — jamais dans le code source ni dans l'historique Git.
+
+**Dépendances auditées :**  
+```bash
+npm audit          # vérifie les vulnérabilités connues
+npm audit --fix    # corrige automatiquement les vulnérabilités non-breaking
+```
+
+L'audit des dépendances est exécuté manuellement avant chaque sprint review. Aucune vulnérabilité de niveau `high` ou `critical` n'est tolérée en production.
+
+**Images Docker vérifiées :**  
+Les images de base utilisées (`node:24-alpine`, `postgres:18-alpine`) sont des images officielles Docker Hub, régulièrement mises à jour par leurs mainteneurs.
+
+**Principe de moindre privilège dans CI/CD :**  
+Le secret `DATABASE_URL` exposé au job de test d'intégration est le `DATABASE_URL` public de Railway (accessible depuis l'extérieur), pas le `DATABASE_URL` interne. L'accès en écriture est limité au seed de test et aux tables de test uniquement.
+
+> ➡️ **Annexe X** — Capture du pipeline GitHub Actions (jobs verts)  
+> ➡️ **Annexe Y** — Résultats `npm audit` (Sprint 3)
+>
+
+
+---
+
+## Éléments transversaux
+
+### T.1 Qualité du code et sécurité
+
+#### T.1.1 Respect des standards de code
+
+Le code source respecte des conventions strictes appliquées via ESLint et Prettier, configurés dans les deux services (API et client). Ces outils sont intégrés au pipeline CI — une violation bloque le merge.
+
+**Conventions appliquées :**
+- Nommage en camelCase pour les variables et fonctions, PascalCase pour les composants React
+- Modules ES (`import`/`export`) uniformément côté API et client
+- Une fonction = une responsabilité (principe SRP)
+- Composants React : un fichier par composant, dans un dossier éponyme
+- SCSS : méthodologie BEM stricte (`.block__element--modifier`)
+- Commits en anglais, convention Conventional Commits (`feat:`, `fix:`, `refactor:`)
+
+**Revue de code systématique :**  
+Chaque Pull Request nécessite l'approbation d'au moins un autre membre avant le merge. Les revues de code ont permis de détecter plusieurs bugs avant qu'ils n'atteignent la branche `develop` — notamment un appel `localStorage.removeItem()` direct dans un composant (contournant le state React), corrigé lors d'une revue.
+
+---
+
+#### T.1.2 Gestion des erreurs et exceptions
+
+La gestion des erreurs est centralisée et cohérente à deux niveaux.
+
+**Back-end — classe AppError et handler global :**
+
+```javascript
+// Classe d'erreur métier — distingue les erreurs attendues des erreurs techniques
+class AppError extends Error {
+  constructor(statusCode, message) {
+    super(message);
+    this.statusCode = statusCode;
+  }
+}
+
+// Handler Express global — dernière ligne de défense
+app.use((err, req, res, next) => {
+  const code = err.statusCode || 500;
+  res.status(code).json({
+    error: err.statusCode
+      ? err.message                        // erreur métier : message lisible
+      : 'Une erreur interne est survenue', // erreur technique : message générique
+    // stack trace jamais exposée au client
+  });
+});
+```
+
+Les codes HTTP sont sémantiquement corrects : `400` (données invalides), `401` (non authentifié), `403` (non autorisé), `404` (ressource introuvable), `409` (conflit — email ou pseudo déjà utilisé).
+
+**Front-end — états d'erreur explicites :**  
+Chaque appel API est encapsulé dans un `try/catch`. Les états d'erreur sont affichés à l'utilisateur avec un message clair — jamais un écran vide. Les formulaires affichent les erreurs de validation champ par champ via `aria-live="polite"` pour les lecteurs d'écran.
+
+---
+
+#### T.1.3 Protection contre les vulnérabilités courantes (OWASP Top 10)
+
+La sécurité a été intégrée dès la conception comme une préoccupation constante, et non ajoutée en fin de projet.
+
+| Vulnérabilité OWASP | Contre-mesure implémentée |
+|---------------------|--------------------------|
+| **A01 — Broken Access Control** | Middlewares `authMiddleware` + `adminMiddleware` sur toutes les routes sensibles. Vérification ownership (RG-03) sur chaque modification de recette. |
+| **A02 — Cryptographic Failures** | Mots de passe hashés avec Argon2id (résistant GPU, OWASP first choice 2024). JWT signé HS256, expiration 7 jours. Aucune donnée sensible en clair en base. |
+| **A03 — Injection** | Prisma ORM paramétrise toutes les requêtes — injection SQL impossible par construction. Zod valide et assainit toutes les entrées côté serveur. |
+| **A04 — Insecure Design** | Architecture découplée API/SPA. Proxy TMDB : la clé API n'est jamais exposée au client. Variables d'environnement pour tous les secrets. |
+| **A05 — Security Misconfiguration** | Helmet.js configure automatiquement les headers HTTP de sécurité (X-Frame-Options, X-Content-Type-Options, HSTS, CSP). CORS restreint à `CLIENT_URL`. |
+| **A07 — Auth Failures** | Rate-limit sur les routes auth (5 tentatives / 15 min par IP). Tokens JWT vérifiés à chaque requête protégée. |
+| **A08 — Data Integrity** | Validation Zod systématique côté serveur. Contraintes d'intégrité référentielle en base (onDelete RESTRICT, CASCADE, SET NULL selon les règles métier). |
+| **A09 — Logging Failures** | Logs Express en développement. Messages d'erreur génériques en production (pas de stack traces exposées). |
+| **A10 — SSRF** | Proxy TMDB : seules les requêtes vers `api.themoviedb.org` sont autorisées — aucun appel à une URL arbitraire fournie par le client. |
+
+---
+
+#### T.1.4 Journalisation et audit (optionnel)
+
+Les logs applicatifs en développement utilisent le middleware Morgan (format `dev`). En production sur Railway, les logs sont accessibles via l'interface Railway et conservés 7 jours. Les notifications in-app constituent un journal d'audit des événements métier (soumissions, validations, refus) persisté en base de données.
+
+---
+
+### T.2 Documentation et présentation
+
+#### T.2.1 Clarté et structure du rapport
+
+Ce dossier est structuré en suivant les trois blocs du référentiel CDA RNCP Niveau 6 :
+- **Bloc 1** — Développer une application sécurisée (interfaces, composants métier, gestion de projet)
+- **Bloc 2** — Concevoir et développer une application organisée en couches (architecture, BDD, documentation)
+- **Bloc 3** — Préparer le déploiement d'une application sécurisée (tests, déploiement, DevOps)
+- **Éléments transversaux** — Qualité, sécurité, RGPD, veille, éco-conception
+
+Chaque section renvoie vers les annexes correspondantes pour les éléments visuels (wireframes, maquettes, diagrammes, captures d'écran) — le corps du dossier argumente et explique, les annexes illustrent.
+
+---
+
+#### T.2.2 Illustrations pertinentes
+
+Les éléments visuels sont regroupés en annexes thématiques :
+
+| Annexes | Contenu |
+|---------|---------|
+| A | Charte graphique complète |
+| B–E | 22 wireframes et maquettes Desktop + Mobile |
+| F | Rapports Lighthouse (Desktop et Mobile) |
+| G | Diagramme d'architecture des couches |
+| H | Diagramme de séquence — création d'une recette |
+| I | Tableau des routes API avec niveaux d'accès |
+| J | Planning Apothéose |
+| K | Kanban complet (Sprints 1, 2, 3) |
+| L | Graphe de l'historique Git |
+| M | Cahier des charges Sprint 0 |
+| N | User Stories complètes (MoSCoW) |
+| O | Diagramme d'architecture complet |
+| P | MCD (Mocodo) |
+| Q | MLD + MPD / schéma Prisma |
+| R | Capture Swagger UI en production |
+| S–U | Documentation technique : fuzzy search, parser temps, pipeline Sharp |
+| V | Guide de déploiement Railway |
+| W | Capture Swagger UI production |
+| X | Capture pipeline GitHub Actions |
+| Y | Résultats npm audit |
+
+---
+
+#### T.2.3 Glossaire des termes techniques
+
+| Terme | Définition |
+|-------|-----------|
+| **API REST** | Interface de programmation qui expose des ressources via des URLs et les verbes HTTP (GET, POST, PATCH, DELETE). Les données sont échangées en JSON. |
+| **Argon2id** | Algorithme de hashage de mots de passe recommandé par l'OWASP. Résistant aux attaques GPU grâce à une consommation mémoire intentionnellement élevée. |
+| **BEM** | Block Element Modifier — convention de nommage CSS. Ex : `.recipe-card__title--featured` = élément `title` du bloc `recipe-card` avec le modificateur `featured`. |
+| **CI/CD** | Intégration Continue / Déploiement Continu. Automatisation des étapes de vérification (tests, lint) et de mise en production à chaque push de code. |
+| **CORS** | Cross-Origin Resource Sharing. Mécanisme qui contrôle quels domaines peuvent faire des requêtes à une API. Configuré pour n'autoriser que l'URL du client. |
+| **CRON** | Planificateur de tâches Unix. Ici utilisé via `node-cron` pour déclencher le nettoyage RGPD des comptes inactifs chaque lundi à 3h. |
+| **Docker Compose** | Outil qui orchestre plusieurs conteneurs Docker. Ici : API + client + PostgreSQL démarrés ensemble avec une seule commande. |
+| **Helmet.js** | Middleware Express qui configure automatiquement les headers HTTP de sécurité (protection XSS, clickjacking, MIME sniffing). |
+| **JWT** | JSON Web Token. Jeton signé contenant l'identité de l'utilisateur (id, email, rôle). Envoyé à chaque requête dans le header `Authorization: Bearer`. |
+| **Levenshtein** | Mesure de distance entre deux chaînes de caractères. "citon" → "citron" = distance 1 (une insertion). Utilisé pour le fuzzy search des ingrédients. |
+| **MCD** | Modèle Conceptuel de Données. Représentation abstraite des entités métier et de leurs associations, sans considération technique. |
+| **MLD** | Modèle Logique de Données. Traduction du MCD en tables relationnelles avec clés primaires et étrangères, indépendant du SGBD. |
+| **MPD** | Modèle Physique de Données. Implémentation concrète du MLD pour un SGBD spécifique (ici PostgreSQL 18). |
+| **Nixpacks** | Système de build de Railway. Détecte automatiquement le langage et construit l'image de déploiement sans Dockerfile. |
+| **OWASP Top 10** | Liste des 10 vulnérabilités web les plus critiques, publiée par l'Open Web Application Security Project. Référence mondiale en sécurité applicative. |
+| **Prisma** | ORM (Object-Relational Mapping) pour Node.js. Traduit les opérations JavaScript en requêtes SQL paramétrées et génère les types TypeScript. |
+| **Rate-limit** | Limitation du nombre de requêtes par IP et par fenêtre de temps. Protège contre les attaques par force brute sur les routes d'authentification. |
+| **RGAA** | Référentiel Général d'Amélioration de l'Accessibilité. Standard français d'accessibilité numérique basé sur les WCAG 2.1. |
+| **RGPD** | Règlement Général sur la Protection des Données. Cadre européen réglementant la collecte et le traitement des données personnelles. |
+| **Sharp** | Bibliothèque Node.js de traitement d'images. Utilisée pour convertir les images uploadées en WebP (−70% de poids) via Multer en mémoire. |
+| **SPA** | Single Page Application. Application web dont le routing est géré côté client (React Router) — pas de rechargement de page entre les vues. |
+| **Swagger / OpenAPI** | Standard de documentation des APIs REST. Swagger UI génère une interface interactive permettant de consulter et tester les endpoints. |
+| **TMDB** | The Movie Database. API externe gratuite fournissant les métadonnées de films et séries (titre, affiche, synopsis, année). |
+| **Trunk-based** | Stratégie Git où toutes les branches convergent rapidement vers une branche principale commune (`develop`), en évitant les branches longues. |
+| **UUID** | Universally Unique Identifier. Identifiant de 128 bits garantissant l'unicité sans compteur auto-incrémental. Utilisé pour toutes les clés primaires. |
+| **Vite** | Bundler JavaScript moderne. Démarrage quasi-instantané en développement et build optimisé avec code splitting automatique en production. |
+| **WebP** | Format d'image moderne de Google offrant une compression supérieure au JPEG/PNG. Supporté par tous les navigateurs modernes. |
+| **Zod** | Bibliothèque de validation de schémas TypeScript. Valide et assainit les données reçues côté serveur avant tout traitement. |
+
+---
+
+#### T.2.4 Démonstration fonctionnelle
+
+Une démonstration live de l'application est disponible à l'adresse de production :
+
+- **Frontend** : `https://graceful-quietude-production.up.railway.app`
+- **API / Swagger** : `https://cines-delices-production.up.railway.app/api-docs`
+
+**Parcours de démonstration prévu :**
+
+1. Consultation du catalogue en tant que visiteur (recherche, filtres, détail recette)
+2. Inscription d'un nouveau compte membre
+3. Création d'une recette avec image, ingrédients (fuzzy search), média TMDB, temps
+4. Soumission à validation (DRAFT → PENDING)
+5. Connexion en tant qu'admin — notification reçue
+6. Validation de la recette (PENDING → PUBLISHED)
+7. Vérification de la notification reçue par le membre
+
+> ➡️ **Annexe Z** — Captures d'écran des écrans clés de l'application en production
+
+---
+
+### T.3 Compétences en anglais — Executive Summary
+
+**Cinés Délices — Project Summary**
+
+Cinés Délices is a community recipe-sharing web application where each recipe is linked to a film or TV series. Users can browse a searchable, filterable catalogue of published recipes, create their own, and submit them for editorial review.
+
+The application follows a decoupled architecture: a React 19 single-page application communicates with a Node.js/Express REST API backed by a PostgreSQL database managed through Prisma ORM. Authentication relies on JWT tokens and Argon2id password hashing. The TMDB external API is consumed server-side through a proxy to protect the API key.
+
+Key technical achievements include: a real-time fuzzy ingredient search using Levenshtein distance, Sharp-powered WebP image compression reducing file sizes by 70%, a GDPR-compliant account deletion workflow with automated CRON jobs, and a four-job CI/CD pipeline on GitHub Actions.
+
+The project was delivered in four one-week sprints by a five-developer team using Scrum methodology, deployed on Railway, and scored 98/97/96/92 on Lighthouse desktop metrics.
+
+---
+
+### T.4 Compétences transversales RNCP
+
+#### T.4.1 Éco-conception
+
+L'éco-conception a été intégrée comme une contrainte du projet dès le Sprint 0, et non ajoutée en post-production.
+
+**Optimisation des images :**  
+Le pipeline Multer → Sharp → WebP réduit le poids des images de 70% en moyenne par rapport au JPEG original. Les images sont redimensionnées à 800×600px maximum, évitant le transfert de résolutions inutiles vers des écrans mobiles.
+
+**Code splitting par route :**  
+React `lazy()` + `Suspense` divise le bundle JavaScript en chunks chargés à la demande. Un visiteur qui consulte uniquement le catalogue ne télécharge jamais le code du back-office admin.
+
+```javascript
+// Chargement différé — le code admin n'est téléchargé que si l'utilisateur y accède
+const AdminPage = lazy(() => import('./pages/Admin/AdminPage'));
+```
+
+**Pagination serveur :**  
+Le catalogue retourne 12 recettes par page — jamais la totalité. Une requête coûteuse n'est exécutée que si l'utilisateur demande la page suivante.
+
+**Cache HTTP (Caddyfile) :**  
+Les assets statiques (JS, CSS, WebP) sont servis avec des headers `Cache-Control` longue durée (`max-age=31536000, immutable`). Un asset déjà téléchargé n'est plus retransféré lors des visites suivantes.
+
+**Images Alpine :**  
+Les images Docker utilisent la variante `alpine` (`node:24-alpine`, `postgres:18-alpine`) — plusieurs fois plus légères que les images complètes, réduisant la consommation de stockage et les temps de build.
+
+**Requêtes Prisma optimisées :**  
+Les requêtes `findMany` n'incluent que les champs nécessaires via `select` — jamais un `SELECT *` implicite. Les relations sont chargées uniquement quand elles sont nécessaires (`include`).
+
+---
+
+#### T.4.2 Veille technologique et sécuritaire
+
+La veille a influencé directement plusieurs choix techniques du projet.
+
+**Sources de veille utilisées :**
+
+| Source | Fréquence | Utilisation concrète |
+|--------|-----------|---------------------|
+| OWASP (owasp.org) | Ponctuelle | Choix Argon2id (OWASP Password Storage Cheat Sheet), implémentation rate-limit |
+| npm audit | À chaque sprint | Détection de vulnérabilités dans les dépendances |
+| MDN Web Docs | Continue | Référence HTML/CSS/JS, attributs ARIA |
+| Prisma Changelog | À chaque version | Migration Prisma 6 → 7 (adapter-pg natif, suppression champ `url` dans datasource) |
+| Zod Changelog | À chaque version | Migration Zod 3 → 4 (correctif vulnérabilité ReDoS) |
+| CNIL (cnil.fr) | Ponctuelle | Implémentation RGPD : durée de conservation des données (12 mois), consentement cookies |
+| Tarteaucitron.js docs | Ponctuelle | Intégration bandeau CNIL, déclaration des cookies techniques |
+
+**Impact concret de la veille :**
+- La lecture du OWASP Password Storage Cheat Sheet a orienté le choix d'**Argon2id** plutôt que bcrypt, plus répandu mais moins recommandé
+- La CVE sur **Zod 3** (vulnérabilité ReDoS sur les validations de chaînes longues) a déclenché la migration vers Zod 4 en Sprint 2
+- La lecture de la documentation **Prisma 7** a révélé le changement de configuration du datasource, évitant un bug de déploiement Railway
+
+---
+
+#### T.4.3 Mentions légales et conformité RGPD
+
+L'application implémente une conformité RGPD complète, conformément aux recommandations de la CNIL.
+
+**Pages légales disponibles :**
+- Mentions légales (responsable de traitement, hébergeur, coordonnées)
+- Politique de confidentialité (données collectées, durée de conservation, droits des utilisateurs)
+- Politique de cookies (liste des cookies, finalité, durée)
+- Charte de modération (règles de publication, motifs de refus)
+
+**Données personnelles collectées et traitées :**
+
+| Donnée | Finalité | Durée de conservation |
+|--------|----------|----------------------|
+| Email | Authentification, notifications, RGPD | Durée du compte + 12 mois inactivité |
+| Pseudo | Affichage public sur les recettes | Durée du compte |
+| Mot de passe (hashé Argon2id) | Authentification | Durée du compte |
+| Date de dernière connexion | Détection inactivité RGPD | Durée du compte |
+| Recettes publiées | Contenu public | Conservées après suppression compte (userId → NULL) |
+| Recettes DRAFT/PENDING | Contenu privé | Supprimées avec le compte |
+
+**Consentement cookies — Tarteaucitron.js :**  
+Le bandeau de consentement CNIL est géré par Tarteaucitron.js. Le cookie JWT d'authentification est déclaré comme cookie technique (ne nécessite pas de consentement car strictement nécessaire au service). Aucun cookie analytique ou publicitaire n'est déposé.
+
+**Droit à l'oubli — suppression de compte :**  
+La suppression d'un compte efface email, pseudo et mot de passe hashé. Les recettes PUBLISHED sont conservées avec `userId` mis à NULL et l'auteur affiché comme "Ancien membre" — le contenu communautaire n'est pas censuré, mais l'identité personnelle est protégée. Les recettes DRAFT et PENDING sont supprimées avec le compte.
+
+**Automatisation RGPD — job CRON :**  
+Un job planifié tourne chaque lundi à 3h00 et applique automatiquement la politique de durée de conservation : avertissement à 11 mois d'inactivité, suppression automatique à 12 mois.
+
+---
+
+#### T.4.4 Démarche structurée de résolution de problèmes
+
+Plusieurs incidents techniques majeurs ont été résolus pendant le projet en suivant une démarche structurée : observation → diagnostic → hypothèse → correction → vérification.
+
+**Exemple 1 — VITE_API_URL non injectée en production**
+
+| Étape | Contenu |
+|-------|---------|
+| **Observation** | En production Railway, toutes les requêtes API échouent. La console affiche des erreurs `fetch` vers `localhost:3000`. |
+| **Diagnostic** | Vite injecte les variables `VITE_*` au moment du build, pas au runtime. Si la variable n'est pas définie avant le build, elle est substituée par `undefined`. |
+| **Hypothèse** | La variable `VITE_API_URL` a été ajoutée dans Railway après le premier build, qui s'est déclenché sans elle. |
+| **Correction** | Ajout de la variable Railway + déclenchement manuel d'un rebuild complet (commit vide `git commit --allow-empty`). |
+| **Vérification** | Inspection du bundle JS pour confirmer la présence de l'URL Railway (`grep` sur le fichier `index-[hash].js`). |
+
+**Exemple 2 — Fusion d'ingrédients bloquée par contrainte FK RESTRICT**
+
+| Étape | Contenu |
+|-------|---------|
+| **Observation** | L'admin tente de fusionner "citrons" dans "citron". L'API retourne une erreur 500 avec `Foreign key constraint failed`. |
+| **Diagnostic** | La table `recipe_ingredients` a une contrainte `onDelete: RESTRICT` sur `ingredientId`. Supprimer "citrons" directement est impossible tant qu'il est utilisé. |
+| **Hypothèse** | Il faut d'abord rediriger toutes les `recipe_ingredients` de l'ingrédient source vers l'ingrédient cible, puis supprimer la source. Et tout cela dans une transaction atomique. |
+| **Correction** | Transaction Prisma `$transaction([updateMany, delete])` — les deux opérations réussissent ou aucune ne s'applique. |
+| **Vérification** | Test d'intégration automatisé sur la route `/api/admin/ingredients/merge` avec les deux cas (succès et ingrédient inexistant). |
+
+**Exemple 3 — Conflits Git récurrents sur CreateRecipe.jsx**
+
+| Étape | Contenu |
+|-------|---------|
+| **Observation** | Plusieurs membres travaillent simultanément sur `CreateRecipe.jsx`. Les merges produisent des conflits complexes à résoudre. |
+| **Diagnostic** | Le fichier (1800+ lignes) concentre trop de responsabilités — formulaire, gestion des ingrédients, TMDB, états, validation — attirant de nombreuses modifications en parallèle. |
+| **Hypothèse** | Découper le fichier en composants thématiques réduira la surface de conflit. |
+| **Correction** | Refactoring en Sprint 3 : extraction de `IngredientManager`, `MediaSearch`, `RecipeForm` en composants séparés + `recipeUtils.js` pour les fonctions partagées. |
+| **Vérification** | Plus aucun conflit Git sur ces fichiers lors des merges suivants. Couverture de tests sur `recipeUtils.js` maintenue à 100%. |
+
+> ➡️ **Annexe AA** — Journal des difficultés rencontrées et solutions apportées (tableau complet)
+>
+
+
+---
+
+## Renvois — Éléments transversaux complémentaires
+
+Les sections suivantes de la checklist CDA sont traitées dans les blocs
+déjà rédigés de ce dossier. Les renvois ci-dessous permettent au jury
+de les localiser rapidement.
+
+---
+
+### Organisation et architecture
+
+**Organisation en couches de l'application**
+→ Voir **section 2.2.1** — Architecture logicielle : description des trois
+couches (présentation / logique métier / accès aux données) avec schéma ASCII
+et justification des choix.
+
+**Mécanismes d'intégration et d'interopérabilité**
+→ Voir **section 2.6.2** — API REST (JSON), proxy TMDB, format des réponses.
+Les échanges entre le frontend React et l'API Express utilisent exclusivement
+le format JSON via HTTP/HTTPS. L'API externe TMDB est consommée côté serveur
+via un proxy Express (protection de la clé API).
+
+---
+
+### Modèles de données
+
+**Modèle Conceptuel de Données (MCD)**
+→ Voir **section 2.3.1** et **Annexe P** — MCD réalisé avec Mocodo lors du
+Sprint 0 : entités, associations et cardinalités.
+
+**Modèle Logique de Données (MLD)**
+→ Voir **section 2.3.2** — MLD textuel complet des 9 tables avec clés
+primaires, clés étrangères et règles onDelete justifiées.
+
+**Modèle Physique de Données (MPD)**
+→ Voir **Annexe Q** — Schéma Prisma (`schema.prisma`) constituant le MPD
+pour PostgreSQL 18, avec types, contraintes et migrations versionnées.
+
+**Scripts de création de la base de données**
+→ Voir **Annexe Q** — Le schéma Prisma et les migrations (`prisma/migrations/`)
+constituent les scripts de création versionés. La commande
+`prisma migrate deploy` applique les migrations en production.
+
+**Sécurisation des accès à la base de données**
+→ Voir **sections 2.2.2 et 2.3.3** — Principe de moindre privilège (variables
+d'environnement Railway, `DATABASE_URL` jamais dans le code), requêtes
+paramétrées via Prisma (injection SQL impossible par construction), aucun
+identifiant en dur dans le code source.
+
+---
+
+### Accès aux données
+
+**Stratégie d'accès aux données (ORM)**
+→ Voir **section 2.4.1** — Prisma 7 comme ORM unique. Le pattern Repository
+est appliqué : les controllers délèguent l'accès aux données à des fonctions
+dédiées, jamais de requêtes Prisma directement dans les routes.
+
+**Implémentation des requêtes**
+→ Voir **section 2.4.1** — Exemple de requête catalogue avec pagination,
+filtres et relations chargées. Voir **section 2.4.2** — Exemple de transaction
+atomique pour le merge d'ingrédients.
+
+**Intégration de bases NoSQL**
+→ Non applicable. Le projet utilise exclusivement PostgreSQL (relationnel).
+Ce choix est justifié par la nature fortement relationnelle des données
+(recettes ↔ médias TMDB ↔ ingrédients ↔ catégories ↔ utilisateurs) qui
+bénéficient des contraintes d'intégrité référentielle d'un SGBD relationnel.
+
+---
+
+### Validation des besoins
+
+**Validation des besoins avec les parties prenantes**
+→ Les besoins ont été validés lors du Sprint 0 en équipe de 5 développeurs,
+en présence du référent pédagogique O'Clock lors des suivis hebdomadaires
+(mercredis). Les User Stories ont été affinées après chaque sprint review
+(vendredi) qui constituait le moment de validation par l'équipe et le
+formateur. Voir **section 2.1.2** et **Annexe N**.
+
+# Dossier de Projet — Cinés Délices
+### Titre Professionnel CDA RNCP Niveau 6 — O'Clock 2026
+**Équipe :** Nathalie Leduc · Hameni Abanya · Vincent Duverger · Orianne Jaunet · Emilie Vatelin
+
+---
+
+# ANNEXES
+
+> Les annexes complètent le corps du dossier sans l'alourdir.
+> Elles regroupent les éléments visuels, techniques et documentaires
+> référencés dans chaque section. Le corps du dossier argumente
+> et explique — les annexes illustrent et détaillent.
+
+---
+
+## Annexe A — Charte graphique complète
+
+**Référencée en :** section 1.2.1
+
+**Fichier source :** `Charte-graphique-cine-delices.docx` (fourni séparément)
+
+La charte graphique de Cinés Délices définit l'identité visuelle complète
+de l'application. Elle comprend :
+
+- **Palette de couleurs** — 9 couleurs avec codes hexadécimaux et règles
+  d'utilisation (fond principal `#1F1D1E`, or `#C9A45C`, bordeaux `#8E1F2F`,
+  crème `#F6F1E8`, brun `#4A3428`, vert `#6E8B5B`, sable `#FBDCA6`,
+  beige `#E8DCC8`, bleu-vert `#3A8A9A`)
+- **Typographie** — Playfair Display (titres) + Inter (corps de texte),
+  hiérarchie H1→H3 + corps + labels
+- **Composants UI** — boutons principaux et secondaires, cards de recettes,
+  tags catégories, icônes (🍳 ⏱ 👤 🎬 🍽)
+- **Logo** — clap de cinéma + typographie Cinés Délices en doré
+- **Règles d'usage** — associations de couleurs recommandées, ratios de
+  contraste WCAG, espacements
+
+`[ Insérer ici : image de la charte graphique ]`
+
+---
+
+## Annexes B–C — Wireframes Desktop et Mobile (22 pages)
+
+**Référencées en :** section 1.2.2
+
+**Fichiers sources :** `Wireframes-Cines-Delices.docx` + `wireframes-PNG.zip`
+
+Les wireframes représentent la structure en noir et blanc de chaque page,
+sans couleur ni charte graphique. Ils ont été réalisés lors du Sprint 0
+pour valider la hiérarchie d'information et la navigation avant de passer
+à la phase de design.
+
+**22 pages modélisées en version Desktop (1200px) et Mobile (390px) :**
+
+| # | Fichier Desktop | Fichier Mobile | Page |
+|---|----------------|---------------|------|
+| 01 | WFD-01-Accueil-Desktop.png | WFM-01-Accueil-Mobile.png | Page d'accueil |
+| 02 | WFD-02-Catalogue-recettes-Desktop.png | WFM-02-Catalogue-recettes-Mobile.png | Catalogue des recettes |
+| 03 | WFD-03-Detail-recette-Desktop.png | WFM-03-Detail-recette-Mobile.png | Détail d'une recette |
+| 04 | WFD-04-Films-Desktop.png | WFM-04-Films-Mobile.png | Catalogue des films |
+| 05 | WFD-05-Series-Desktop.png | WFM-05-Series-Mobile.png | Catalogue des séries |
+| 06 | WFD-06-Connexion-Desktop.png | WFM-06-Connexion-Mobile.png | Connexion |
+| 07 | WFD-07-Inscription-Desktop.png | WFM-07-Inscription-Mobile.png | Inscription |
+| 08 | WFD-08-Reset-MDP-Desktop.png | WFM-08-Reset-MDP-Mobile.png | Réinitialisation MDP |
+| 09 | WFD-09-Contact-Desktop.png | WFM-09-Contact-Mobile.png | Contact |
+| 10 | WFD-10-Mes-recettes-Desktop.png | WFM-10-Mes-recettes-Mobile.png | Mes recettes (membre) |
+| 11 | WFD-11-Creer-recette-Desktop.png | WFM-11-Creer-recette-Mobile.png | Créer / modifier une recette |
+| 12 | WFD-12-Profil-Desktop.png | WFM-12-Profil-Mobile.png | Profil membre |
+| 13 | WFD-13-Notifications-Desktop.png | WFM-13-Notifications-Mobile.png | Notifications |
+| 14 | WFD-14-Admin-Validation-Desktop.png | WFM-14-Admin-Validation-Mobile.png | Admin — Validation recettes |
+| 15 | WFD-15-Admin-Recettes-Desktop.png | WFM-15-Admin-Recettes-Mobile.png | Admin — Toutes les recettes |
+| 16 | WFD-16-Mentions-legales-Desktop.png | WFM-16-Mentions-legales-Mobile.png | Mentions légales |
+| 17 | WFD-17-Categorie-recettes-Desktop.png | WFM-17-Categorie-recettes-Mobile.png | Catégorie de recettes |
+| 18 | WFD-18-Detail-film-serie-Desktop.png | WFM-18-Detail-film-serie-Mobile.png | Détail film / série |
+| 19 | WFD-19-Membre-Validation-Desktop.png | WFM-19-Membre-Validation-Mobile.png | Membre — retour soumission |
+| 20 | WFD-20-Admin-Gerer-Desktop.png | WFM-20-Admin-Gerer-Mobile.png | Admin — Gérer |
+| 21 | WFD-21-Admin-Detail-Validation-Desktop.png | WFM-21-Admin-Detail-Validation-Mobile.png | Admin — Détail validation |
+| 22 | WFD-22-Admin-Ajouter-Categorie-Desktop.png | WFM-22-Admin-Ajouter-Categorie-Mobile.png | Admin — Ajouter catégorie |
+
+`[ Insérer ici : les 22 wireframes Desktop (WFD-01 à WFD-22) ]`
+`[ Insérer ici : les 22 wireframes Mobile (WFM-01 à WFM-22) ]`
+
+---
+
+## Annexes D–E — Maquettes Desktop et Mobile (22 pages)
+
+**Référencées en :** section 1.2.2
+
+**Fichiers sources :** `Maquettes-Cines-Delices.docx` + `maquettes-PNG.zip`
+
+Les maquettes appliquent la charte graphique sur la structure validée par
+les wireframes. Elles montrent le rendu final avec les vraies couleurs
+(noir `#1F1D1E`, or `#C9A45C`, bordeaux `#8E1F2F`), la typographie
+Playfair Display / Inter, et les images de référence.
+
+Les mêmes 22 pages que les wireframes, en version haute-fidélité.
+
+**Fichiers :** `MQD-01` à `MQD-22` (Desktop) · `MQM-01` à `MQM-22` (Mobile)
+
+`[ Insérer ici : les 22 maquettes Desktop (MQD-01 à MQD-22) ]`
+`[ Insérer ici : les 22 maquettes Mobile (MQM-01 à MQM-22) ]`
+
+---
+
+## Annexe F — Rapports Lighthouse (Desktop et Mobile)
+
+**Référencée en :** section 1.2.7
+
+**Date du rapport :** 27 avril 2026 — URL : `https://graceful-quietude-production.up.railway.app`
+
+**Scores obtenus :**
+
+| Métrique | Desktop | Mobile |
+|----------|---------|--------|
+| Performances | 98 | 78 |
+| Accessibilité | 97 | 96 |
+| Bonnes pratiques | 96 | 100 |
+| SEO | 92 | 92 |
+
+`[ Insérer ici : capture rapport Lighthouse Bureau ]`
+`[ Insérer ici : capture rapport Lighthouse Mobile ]`
+
+---
+
+## Annexe G — Diagramme d'architecture des couches
+
+**Référencée en :** sections 1.3.1 et 2.2.1
+
+Schéma représentant les trois couches de l'application et leurs interactions :
+
+```
+┌──────────────────────────────────────────────────────────┐
+│  COUCHE PRÉSENTATION                                      │
+│  React 19 · React Router v7 · SCSS/BEM · AuthContext     │
+│  Pages · Composants · Services · Utils                   │
+│  Déployé sur Railway (service client — Caddy)            │
+└────────────────────┬─────────────────────────────────────┘
+                     │ HTTPS · JSON · REST
+                     │ VITE_API_URL
+┌────────────────────▼─────────────────────────────────────┐
+│  COUCHE LOGIQUE MÉTIER                                    │
+│  Node.js 24 · Express 5                                  │
+│  app.js → routes → middlewares → controllers             │
+│  Helmet · CORS · Rate-limit · Zod · JWT · Argon2         │
+│  Déployé sur Railway (service api — Nixpacks)            │
+└────────────────────┬─────────────────────────────────────┘
+                     │ Prisma ORM · Requêtes paramétrées
+┌────────────────────▼─────────────────────────────────────┐
+│  COUCHE ACCÈS AUX DONNÉES                                │
+│  Prisma 7 · PostgreSQL 18                                │
+│  9 tables · UUID · Migrations versionnées                │
+│  Déployé sur Railway (service PostgreSQL)                │
+└──────────────────────────────────────────────────────────┘
+                     │
+┌────────────────────▼─────────────────────────────────────┐
+│  API EXTERNE                                             │
+│  TMDB — The Movie Database                               │
+│  Proxy serveur (clé jamais exposée au client)            │
+└──────────────────────────────────────────────────────────┘
+```
+
+`[ Insérer ici : diagramme d'architecture complet (export Excalidraw ou équivalent) ]`
+
+---
+
+## Annexe H — Diagramme de séquence : création d'une recette
+
+**Référencée en :** section 1.3.4
+
+Ce diagramme illustre le flux complet de création d'une recette,
+de la saisie dans le formulaire React jusqu'à la persistance en base.
+
+```
+Membre          React (CreateRecipe)       API Express        PostgreSQL
+  │                     │                      │                  │
+  │── remplit form ────►│                      │                  │
+  │                     │── validation Zod ───►│                  │
+  │                     │   (client-side)       │                  │
+  │── soumet ──────────►│                      │                  │
+  │                     │── POST /api/recipes ─►│                  │
+  │                     │   multipart/form-data │                  │
+  │                     │                      │── Multer ────────►│
+  │                     │                      │   (mémoire)       │
+  │                     │                      │── Sharp → WebP    │
+  │                     │                      │── Zod validation  │
+  │                     │                      │── authMiddleware  │
+  │                     │                      │── prisma.recipe   │
+  │                     │                      │   .create() ─────►│
+  │                     │                      │◄── { id, slug } ──│
+  │                     │◄── 201 { recipe } ───│                  │
+  │◄── feedback ────────│                      │                  │
+  │    "Recette sauvegardée en brouillon"      │                  │
+```
+
+`[ Insérer ici : diagramme de séquence PlantUML ou Excalidraw ]`
+
+---
+
+## Annexe I — Tableau complet des routes API
+
+**Référencée en :** section 1.3.6
+
+| Méthode | Route | Accès | Description |
+|---------|-------|-------|-------------|
+| GET | `/api/health` | Public | Vérification de l'état de l'API |
+| POST | `/api/auth/register` | Public | Inscription membre |
+| POST | `/api/auth/login` | Public | Connexion + retour JWT |
+| POST | `/api/auth/forgot-password` | Public | Demande de réinitialisation MDP |
+| PATCH | `/api/auth/reset-password` | Public | Réinitialisation MDP via token |
+| GET | `/api/users/me` | Membre | Infos du compte connecté |
+| PATCH | `/api/users/me` | Membre | Modifier pseudo / nom |
+| PATCH | `/api/users/me/password` | Membre | Changer le mot de passe |
+| DELETE | `/api/users/me` | Membre | Supprimer son compte (RGPD) |
+| GET | `/api/recipes` | Public | Catalogue PUBLISHED (pagination + filtres) |
+| GET | `/api/recipes/:slug` | Public | Détail recette par slug |
+| GET | `/api/users/me/recipes` | Membre | Mes recettes (tous statuts) |
+| POST | `/api/recipes` | Membre | Créer une recette (multipart) |
+| PATCH | `/api/recipes/:id` | Membre | Modifier sa recette |
+| PATCH | `/api/recipes/:id/submit` | Membre | Soumettre DRAFT → PENDING |
+| DELETE | `/api/recipes/:id` | Membre | Supprimer sa recette (DRAFT/PENDING) |
+| GET | `/api/categories` | Public | Liste des catégories |
+| GET | `/api/ingredients/search` | Membre | Recherche fuzzy d'ingrédients |
+| GET | `/api/media/movies` | Public | Catalogue films (snapshot local) |
+| GET | `/api/media/series` | Public | Catalogue séries (snapshot local) |
+| GET | `/api/tmdb/medias/search` | Membre | Autocomplétion TMDB (debounce 400ms) |
+| GET | `/api/tmdb/medias/:type/:id` | Membre | Détail média TMDB |
+| GET | `/api/notifications` | Membre | Notifications de l'utilisateur connecté |
+| PATCH | `/api/notifications/:id/read` | Membre | Marquer une notification comme lue |
+| GET | `/api/admin/recipes/pending` | Admin | Recettes en attente de validation |
+| PATCH | `/api/admin/recipes/:id/publish` | Admin | Valider → PUBLISHED + notif membre |
+| PATCH | `/api/admin/recipes/:id/reject` | Admin | Refuser → DRAFT + motif + notif |
+| GET | `/api/admin/users` | Admin | Liste des membres |
+| PATCH | `/api/admin/users/:id/role` | Admin | Changer le rôle d'un membre |
+| DELETE | `/api/admin/users/:id` | Admin | Supprimer un compte |
+| GET | `/api/admin/ingredients/pending` | Admin | Ingrédients en attente de validation |
+| PATCH | `/api/admin/ingredients/:id/approve` | Admin | Valider un ingrédient |
+| POST | `/api/admin/ingredients/merge` | Admin | Fusionner deux ingrédients |
+| POST | `/api/admin/categories` | Admin | Créer une catégorie |
+| PATCH | `/api/admin/categories/:id` | Admin | Modifier une catégorie |
+| DELETE | `/api/admin/categories/:id` | Admin | Supprimer une catégorie |
+
+---
+
+## Annexe J — Planning Apothéose
+
+**Référencée en :** section 1.4.2
+
+**Fichier source :** `Planning_Apothéose.xlsx` (fourni séparément)
+
+Planning officiel fourni par O'Clock couvrant les jalons de l'Apothéose,
+du lancement Sprint 0 (lundi 09/03/2026) au jour des démos (vendredi 03/04/2026).
+
+| Jalon | Date | Événement |
+|-------|------|-----------|
+| Lancement S0 | Lundi 09/03/2026 | Matinée certif + lancement Apothéose |
+| Suivi hebdo | Mercredi 11/03/2026 | Point de suivi intermédiaire |
+| Lancement S1 + rétro S0 | Vendredi 13/03/2026 | Démarrage Sprint 1 |
+| Suivi hebdo | Mercredi 18/03/2026 | Point de suivi intermédiaire |
+| Lancement S2 + rétro S1 | Vendredi 20/03/2026 | Démarrage Sprint 2 |
+| Suivi hebdo | Mercredi 25/03/2026 | Point de suivi intermédiaire |
+| Lancement S3 + rétro S2 | Vendredi 27/03/2026 | Démarrage Sprint 3 |
+| Jour des démos | Vendredi 03/04/2026 | Présentation finale devant jury |
+
+`[ Insérer ici : capture ou export du fichier Planning_Apothéose.xlsx ]`
+
+---
+
+## Annexe K — Kanban complet (Sprints 1, 2 et 3)
+
+**Référencée en :** section 1.4.2
+
+**Fichier source :** `kanban-Cinés-Délices.xlsx` (fourni séparément)
+
+Board Kanban GitHub Projects géré sur
+`https://github.com/O-clock-Francfort/cines-delices`.
+Le fichier Excel recense les 144 issues du Sprint 1, 78 du Sprint 2
+et 20 du Sprint 3, avec pour chacune : titre, lien GitHub, assignee,
+statut et labels.
+
+**Colonnes du board :** Backlog → Todo → In Progress → PR → Test → Done
+
+**Labels utilisés :** BACK · FRONT · CRITIQUE · CORRECTION · NEW ·
+DEPLOY · SWAGGER · DOCUMENTATION · LUNDI–VENDREDI
+
+`[ Insérer ici : capture du board Kanban GitHub Projects (Sprint 2) ]`
+`[ Insérer ici : export ou capture du fichier kanban-Cinés-Délices.xlsx ]`
+
+---
+
+## Annexe L — Graphe de l'historique Git
+
+**Référencée en :** section 1.4.8
+
+Historique Git montrant l'évolution des branches et merges sur l'ensemble
+des sprints. Générable avec la commande :
+
+```bash
+git log --oneline --graph --all --decorate
+```
+
+Ou via l'extension **GitLens** dans VS Code → vue "Git Graph".
+
+`[ Insérer ici : capture du graphe Git (GitLens ou git log --graph) ]`
+
+---
+
+## Annexe M — Cahier des charges (Sprint 0)
+
+**Référencée en :** section 2.1.1
+
+**Fichier source :** `CinesDelices-Dossier-Conception-Final.docx` (fourni séparément)
+
+Le cahier des charges rédigé lors du Sprint 0 comprend :
+- Présentation du projet et contexte
+- Problèmes identifiés et objectifs
+- Public cible (4 profils utilisateurs)
+- Fonctionnalités MVP (Must) et évolutions (Should / Could)
+- Architecture et choix techniques justifiés
+- Arborescence de l'application (toutes les routes front)
+- 25 User Stories MoSCoW
+- Analyse des risques
+- Rôles et responsabilités de l'équipe
+
+`[ Insérer ici : export PDF du cahier des charges Sprint 0 ]`
+
+---
+
+## Annexe N — User Stories complètes (MoSCoW)
+
+**Référencée en :** section 2.1.2
+
+Extrait représentatif — le cahier des charges complet (Annexe M) contient
+les 25 User Stories avec critères d'acceptation.
+
+| ID | Priorité | Acteur | User Story | Critères d'acceptation |
+|----|----------|--------|------------|------------------------|
+| US-01 | Must | Visiteur | Consulter le catalogue afin de découvrir les recettes | Catalogue paginé (12/page), filtrable par catégorie, recherche temps réel |
+| US-02 | Must | Visiteur | Rechercher une recette par titre ou film | Debounce 400ms, résultats mis à jour sans rechargement |
+| US-03 | Must | Visiteur | Créer un compte afin d'accéder à l'espace membre | Email unique, MDP ≥ 8 chars, confirmation par email |
+| US-04 | Must | Membre | Créer une recette avec image, ingrédients et étapes | Upload image WebP, fuzzy search ingrédients, association TMDB |
+| US-05 | Must | Membre | Soumettre ma recette à validation | Statut DRAFT → PENDING, notification admin déclenchée |
+| US-06 | Must | Admin | Valider ou refuser une recette soumise | PENDING → PUBLISHED ou DRAFT + motif + notification membre |
+| US-07 | Should | Membre | Recevoir une notification lors d'un changement de statut | Badge compteur + liste de notifications consultable |
+| US-08 | Should | Membre | Associer un film/série via TMDB | Autocomplétion debounce, snapshot stocké localement |
+| US-09 | Should | Visiteur | Réinitialiser mon mot de passe par email | Token usage unique, expiration 1h, email Nodemailer |
+| US-10 | Could | Admin | Fusionner des ingrédients en doublon | Transaction atomique, toutes les recettes redirigées |
+
+---
+
+## Annexe O — Diagramme d'architecture (composants + déploiement)
+
+**Référencée en :** section 2.2.1
+
+Diagramme UML de déploiement montrant les trois services Railway
+et leurs interactions, ainsi que le diagramme de composants détaillant
+la structure interne de l'API Express.
+
+```
+┌─────────────────── Railway Platform ──────────────────────┐
+│                                                            │
+│  ┌──────────────┐    HTTPS/JSON    ┌──────────────────┐  │
+│  │   Service    │◄────────────────►│   Service API    │  │
+│  │   Client     │                  │   Node.js 24     │  │
+│  │   React/Vite │                  │   Express 5      │  │
+│  │   Caddy      │                  │   Prisma 7       │  │
+│  └──────────────┘                  └────────┬─────────┘  │
+│                                             │ Prisma ORM  │
+│                                    ┌────────▼─────────┐  │
+│                                    │   PostgreSQL 18  │  │
+│                                    │   (volume        │  │
+│                                    │    persistant)   │  │
+│                                    └──────────────────┘  │
+└────────────────────────────────────────────────────────────┘
+                              │
+                    ┌─────────▼──────────┐
+                    │  TMDB External API  │
+                    │  api.themoviedb.org │
+                    └────────────────────┘
+```
+
+`[ Insérer ici : diagramme PlantUML composants + déploiement ]`
+
+---
+
+## Annexe P — MCD (Mocodo)
+
+**Référencée en :** section 2.3.1
+
+Modèle Conceptuel de Données réalisé avec Mocodo lors du Sprint 0.
+Représente les entités métier (UTILISATEUR, RECETTE, CATEGORIE, MEDIA,
+INGREDIENT, GENRE, NOTIFICATION) et leurs associations avec cardinalités,
+sans aucune considération technique.
+
+`[ Insérer ici : export image MCD Mocodo ]`
+
+---
+
+## Annexe Q — MLD complet + MPD (schéma Prisma)
+
+**Référencée en :** sections 2.3.2 et 2.4.1
+
+### MLD textuel (9 tables)
+
+```
+users          (__id__, email, pseudo, nom, password_hash, role,
+                created_at, last_login_at, reset_token, reset_token_expires)
+
+categories     (__id__, nom, description, color)
+
+genres         (__id__, nom, tmdb_id)
+
+media          (__id__, tmdb_id, titre, type, slug, poster_url,
+                synopsis, annee, realisateur, created_at)
+
+media_genres   (__#media_id__, __#genre_id__)
+
+recipes        (__id__, titre, slug, image_url, instructions,
+                nombre_personnes, temps_preparation, temps_cuisson,
+                status, rejection_reason,
+                #user_id → users (SET NULL),
+                #category_id → categories (RESTRICT),
+                #media_id → media (RESTRICT),
+                created_at, updated_at)
+
+ingredients    (__id__, nom, approved)
+
+recipe_ingredients  (__#recipe_id → recipes (CASCADE)__,
+                     __#ingredient_id → ingredients (RESTRICT)__,
+                     quantity, unit)
+
+notifications  (__id__, type, message, is_read,
+                #user_id → users (CASCADE),
+                #recipe_id → recipes (SET NULL),
+                created_at)
+```
+
+### MPD — Schéma Prisma (extrait)
+
+```prisma
+model User {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  pseudo          String    @unique
+  passwordHash    String
+  role            Role      @default(MEMBER)
+  createdAt       DateTime  @default(now())
+  lastLoginAt     DateTime?
+  resetToken      String?
+  resetTokenExp   DateTime?
+  recipes         Recipe[]
+  notifications   Notification[]
+  @@map("users")
+}
+
+model Recipe {
+  id              String    @id @default(uuid())
+  titre           String
+  slug            String    @unique
+  imageUrl        String?
+  instructions    String
+  nombrePersonnes Int
+  tempsPrep       Int       // en minutes
+  tempsCuisson    Int       // en minutes
+  status          Status    @default(DRAFT)
+  rejectionReason String?
+  userId          String?
+  categoryId      String
+  mediaId         String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  user            User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  category        Category  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  media           Media?    @relation(fields: [mediaId], references: [id], onDelete: Restrict)
+  ingredients     RecipeIngredient[]
+  notifications   Notification[]
+  @@map("recipes")
+}
+
+enum Status { DRAFT  PENDING  PUBLISHED }
+enum Role   { MEMBER ADMIN }
+```
+
+`[ Insérer ici : schéma Prisma complet (schema.prisma) ]`
+
+---
+
+## Annexe R — Capture Swagger UI en production
+
+**Référencée en :** section 2.5.1
+
+Interface Swagger UI accessible à l'adresse :
+`https://cines-delices-production.up.railway.app/api-docs`
+
+Elle liste toutes les routes groupées par tag (Auth, Recettes, Admin,
+TMDB, Catégories, Ingrédients) et permet de les tester directement
+depuis le navigateur après authentification JWT.
+
+`[ Insérer ici : capture de l'interface Swagger UI — vue générale ]`
+`[ Insérer ici : capture d'un exemple de requête testée dans Swagger ]`
+
+---
+
+## Annexe S — Documentation technique : Fuzzy search des ingrédients
+
+**Référencée en :** section 2.5.2
+
+**Problème résolu :** éviter la création de doublons d'ingrédients
+("citon" alors que "citron" existe) tout en permettant des noms composés
+("fraise des bois" alors que "fraise" existe).
+
+**Algorithme à deux requêtes :**
+
+```
+Utilisateur tape "citon"
+  │
+  ├── Requête 1 : WHERE nom CONTAINS "citon"
+  │   → [] (vide — normal pour une faute de frappe)
+  │
+  ├── Moins de 3 résultats → Requête 2 de rattrapage
+  │   WHERE nom CONTAINS "cit"  (3 premières lettres)
+  │   → ["citron", "citronnade", "citronnelle"]
+  │
+  └── Tri par distance de Levenshtein
+        "citon" → "citron"      : distance 1  ✅ suggéré en #1
+        "citon" → "citronnade"  : distance 5  — en #2
+        "citon" → "citronnelle" : distance 6  — en #3
+```
+
+**Distance de Levenshtein :**
+Nombre minimal d'opérations (insertion, suppression, substitution)
+pour transformer un mot en un autre.
+"citon" → "citron" = 1 insertion du "r" = distance 1.
+
+**Normalisation au singulier :**
+Tout ingrédient est normalisé avant sauvegarde :
+le `s` final est supprimé sauf pour les exceptions
+(`riz`, `noix`, `pois`, `fois`, `bois`, `fois`, `fois`...).
+"Tomates" → "tomate", "citrons" → "citron", "riz" → "riz" (inchangé).
+
+**Règle métier :**
+Si l'ingrédient saisi correspond exactement à un existant (distance 0),
+une suggestion est affichée mais l'utilisateur peut quand même créer
+un nom composé ("fraise des bois" ≠ "fraise").
+
+`[ Insérer ici : export du document docx dédié au fuzzy search ]`
+
+---
+
+## Annexe T — Documentation technique : Parser de temps
+
+**Référencée en :** section 2.5.2
+
+**Problème résolu :** permettre à l'utilisateur de saisir les temps de
+préparation et cuisson dans n'importe quel format naturel, et les stocker
+de manière cohérente en base (minutes entières).
+
+**Formats acceptés → minutes :**
+
+| Saisie | Minutes | Règle appliquée |
+|--------|---------|-----------------|
+| `45` | 45 | Entier pur |
+| `45min` | 45 | Pattern `\d+\s*min` |
+| `1h` | 60 | Pattern `\d+h` |
+| `1h30` | 90 | Pattern `\d+h\s*\d+` |
+| `1h30min` | 90 | Pattern combiné |
+| `1:30` | 90 | Pattern `\d+:\d+` |
+| `2h10` | 130 | Pattern `\d+h\s*\d+` |
+| `` (vide) | null | Valeur absente |
+| `abc` | null | Non reconnu |
+
+**Reconversion à l'affichage :**
+
+| Minutes stockées | Affichage |
+|-----------------|-----------|
+| 45 | "45 min" |
+| 60 | "1h" |
+| 90 | "1h 30min" |
+| 130 | "2h 10min" |
+
+**Tests unitaires associés :** 8 cas dans `recipeUtils.test.js`,
+couvrant tous les formats et les cas limites (vide, non reconnu).
+
+`[ Insérer ici : export du document docx dédié au parser de temps ]`
+
+---
+
+## Annexe U — Documentation technique : Pipeline Sharp/WebP
+
+**Référencée en :** section 2.5.2
+
+**Problème résolu :** réduire le poids des images uploadées (−70% en
+moyenne) sans écrire le fichier original sur le disque.
+
+**Flux de traitement :**
+
+```
+Utilisateur upload une image (JPEG/PNG/WebP)
+  │
+  ├── Multer (storage: memoryStorage())
+  │   L'image est conservée en mémoire RAM (Buffer)
+  │   Jamais écrite sur le disque en format original
+  │
+  ├── Sharp (traitement en mémoire)
+  │   .resize(800, 600, { fit: 'cover' })   ← recadrage centré
+  │   .webp({ quality: 80 })                ← conversion WebP
+  │   .toBuffer()                            ← retour Buffer
+  │
+  └── Écriture finale
+      fs.writeFile(`/uploads/${uuid}.webp`)
+      → imageUrl stockée en BDD : "/uploads/uuid.webp"
+```
+
+**Gains mesurés :**
+
+| Format original | Taille avant | Taille après WebP | Réduction |
+|----------------|-------------|-------------------|-----------|
+| JPEG 2000×1500 | ~800 Ko | ~240 Ko | −70% |
+| PNG 1200×900 | ~1,2 Mo | ~180 Ko | −85% |
+| WebP 800×600 | ~150 Ko | ~120 Ko | −20% |
+
+**Formats acceptés en entrée :** JPEG, JPG, PNG, WebP
+(configuré dans Multer via `fileFilter` avec vérification du MIME type).
+
+`[ Insérer ici : export du document docx dédié au pipeline Sharp ]`
+
+---
+
+## Annexe V — Guide de déploiement Railway
+
+**Référencée en :** sections 3.1.1 et 3.3.1
+
+Guide pas à pas pour déployer Cinés Délices sur Railway à partir
+du fork GitHub `Nathalie-Leduc/cines-delices`.
+
+**Prérequis :** compte Railway, compte GitHub, clé API TMDB, compte Mailtrap ou Brevo.
+
+### Étape 1 — Créer le projet Railway
+
+1. Railway → **New Project** → **Deploy from GitHub repo**
+2. Sélectionner le fork `Nathalie-Leduc/cines-delices`
+3. Branche : `main`
+
+### Étape 2 — Ajouter PostgreSQL
+
+Dans le projet Railway → **New Service** → **Database** → **PostgreSQL**
+
+### Étape 3 — Configurer le service API
+
+**Settings :**
+- Root Directory : `api`
+- Start Command : `node src/app.js`
+
+**Variables :**
+
+```
+DATABASE_URL     = ${{Postgres.DATABASE_URL}}
+JWT_SECRET       = [64 chars aléatoires]
+TMDB_API_KEY     = [clé TMDB v3]
+TMDB_BASE_URL    = https://api.themoviedb.org/3
+API_BASE_URL     = https://[url-api].up.railway.app
+CLIENT_URL       = https://[url-client].up.railway.app
+NODE_ENV         = production
+SMTP_HOST        = [hôte SMTP Brevo ou Mailtrap]
+SMTP_PORT        = 587
+SMTP_USER        = [identifiant SMTP]
+SMTP_PASS        = [mot de passe SMTP]
+SMTP_FROM        = "Cinés Délices <noreply@cines-delices.fr>"
+```
+
+### Étape 4 — Configurer le service Client
+
+**Settings :**
+- Root Directory : `client`
+- Build Command : `npm install && npm run build`
+
+**Variables :**
+
+```
+VITE_API_URL = https://[url-api].up.railway.app
+```
+
+> ⚠️ `VITE_API_URL` doit être définie **avant** le build.
+> Vite l'injecte au moment de la compilation, pas au runtime.
+
+### Étape 5 — Ordre de déploiement
+
+```
+1. PostgreSQL  (automatique)
+2. API         (attend que Postgres soit prêt via healthcheck)
+3. Client      (après que l'API soit en ligne)
+```
+
+### Étape 6 — Vérifications post-déploiement
+
+```bash
+# Vérifier que l'API répond
+curl https://[url-api].up.railway.app/api/health
+# → { "status": "ok" }
+
+# Vérifier que Swagger est accessible
+open https://[url-api].up.railway.app/api-docs
+```
+
+`[ Insérer ici : captures des services Railway configurés ]`
+
+---
+
+## Annexe W — Capture Swagger UI en production
+
+**Référencée en :** section 3.3.1
+
+*(Doublon volontaire de l'Annexe R — mise en contexte déploiement)*
+
+`[ Insérer ici : capture Swagger UI — route POST /api/auth/login testée ]`
+
+---
+
+## Annexe X — Capture du pipeline GitHub Actions
+
+**Référencée en :** sections 3.4.1 et 3.4.2
+
+Pipeline CI/CD accessible sur :
+`https://github.com/O-clock-Francfort/cines-delices/actions`
+
+Fichier de configuration : `.github/workflows/ci.yml`
+
+Le pipeline comprend 4 jobs :
+- `lint-client` — ESLint React/Vite
+- `test-client` — Vitest (76 tests unitaires)
+- `lint-api` — ESLint Node.js
+- `test-api-integration` — node:assert (7 suites sur API Railway)
+
+`[ Insérer ici : capture du pipeline GitHub Actions — tous les jobs verts ]`
+`[ Insérer ici : capture du détail d'un job (ex: test-client) ]`
+
+---
+
+## Annexe Y — Résultats npm audit (Sprint 3)
+
+**Référencée en :** section 3.4.4
+
+Audit des dépendances exécuté en fin de Sprint 3 sur les deux services.
+
+```bash
+# API
+cd api && npm audit
+# → X vulnerabilities (0 critical, 0 high)
+
+# Client
+cd client && npm audit
+# → X vulnerabilities (0 critical, 0 high)
+```
+
+`[ Insérer ici : capture ou copie de la sortie npm audit API ]`
+`[ Insérer ici : capture ou copie de la sortie npm audit Client ]`
+
+---
+
+## Annexe Z — Captures d'écran de l'application en production
+
+**Référencée en :** section T.2.4
+
+URL de production : `https://graceful-quietude-production.up.railway.app`
+
+Écrans clés illustrant les fonctionnalités principales :
+
+`[ Insérer ici : capture — Page d'accueil (hero + recettes vedettes) ]`
+`[ Insérer ici : capture — Catalogue avec filtres et recherche ]`
+`[ Insérer ici : capture — Détail d'une recette (ingrédients + étapes) ]`
+`[ Insérer ici : capture — Formulaire de création de recette ]`
+`[ Insérer ici : capture — Espace membre — Mes recettes (badges DRAFT/PENDING/PUBLISHED) ]`
+`[ Insérer ici : capture — Back-office admin — Validation d'une recette ]`
+`[ Insérer ici : capture — Notifications membre ]`
+`[ Insérer ici : capture — Version mobile (catalogue + menu hamburger) ]`
+
+---
+
+## Annexe AA — Journal des difficultés rencontrées
+
+**Référencée en :** section T.4.4
+
+| # | Difficulté | Sprint | Description | Solution |
+|---|-----------|--------|-------------|----------|
+| 1 | Fork GitHub read-only | S1 | L'organisation O-clock-Francfort est en lecture seule — push impossible depuis le repo principal | Remote `perso` (Nathalie-Leduc/cines-delices) + sync fetch + merge + push |
+| 2 | Prisma migrations P3005 | S1 | BDD Railway désynchronisée — migrations échouaient avec code P3005 | Reset DB prod + replay intégral `prisma migrate deploy` |
+| 3 | VITE_API_URL non injectée | S1 | Variable Vite non définie avant le build — toutes les requêtes API pointaient vers localhost en prod | Ajout variable Railway + rebuild complet (commit vide) + vérification bundle JS |
+| 4 | Fuzzy search trop agressif | S2 | "fraise des bois" impossible à créer car "fraise" existait déjà — normalisation bloquante | Double requête (contains exact + préfixe 3 lettres) + tri Levenshtein + seuil de distance |
+| 5 | parseTimeToMinutes | S2 | Formats libres (1h10, 1:10, 30min) stockés comme 0 en BDD | Regex multi-patterns couvrant tous les formats + 8 tests unitaires |
+| 6 | Images non affichées prod | S2 | imageURL relative en dev, API_BASE_URL absent en prod | Variable `API_BASE_URL` + préfixage systématique dans les controllers |
+| 7 | Merge FK RESTRICT | S2 | Impossible de supprimer un ingrédient utilisé dans des recettes (contrainte FK) | Transaction Prisma atomique : `updateMany` (repoint) puis `delete` (source) |
+| 8 | Conflits Git CreateRecipe.jsx | S2–S3 | Fichier 1800+ lignes — conflits récurrents lors des merges | Refactoring en composants thématiques + extraction `recipeUtils.js` |
+| 9 | logout() non centralisé | S2 | Appel direct `localStorage.removeItem()` dans les composants — state React non mis à jour | Centralisation `logout()` dans `AuthContext` avec `useCallback` |
+| 10 | TMDB doublons media | S2 | Un film et une série pouvaient avoir le même `tmdb_id` — risque de doublon | Contrainte composite `@@unique([tmdbId, type])` dans le schéma Prisma |
