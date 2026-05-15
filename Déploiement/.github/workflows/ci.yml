@@ -1,0 +1,157 @@
+# =============================================================================
+# CI/CD — Cinés Délices
+# =============================================================================
+name: CI/CD — Cinés Délices
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+# ─────────────────────────────────────────────────────────────
+# JOB 1 — Lint Frontend
+# ─────────────────────────────────────────────────────────────
+jobs:
+  lint-client:
+    name: 🎨 Lint — Client
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: client/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+
+# ─────────────────────────────────────────────────────────────
+# JOB 2 — Tests unitaires Frontend (Vitest)
+# ─────────────────────────────────────────────────────────────
+  test-client:
+    name: 🧪 Tests unitaires — Client (Vitest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: client/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:run
+
+# ─────────────────────────────────────────────────────────────
+# JOB 3 — Lint Backend
+# ─────────────────────────────────────────────────────────────
+  lint-api:
+    name: 🔍 Lint — API
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: api/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+
+# ─────────────────────────────────────────────────────────────
+# JOB 4 — Tests d'intégration API (Railway)
+# Lancé UNIQUEMENT sur push (pas sur les PRs)
+# ─────────────────────────────────────────────────────────────
+  test-api-integration:
+    name: 🚀 Tests d'intégration — API (Railway)
+    runs-on: ubuntu-latest
+    needs: [lint-client, test-client, lint-api]
+    if: github.event_name == 'push'
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: api/pnpm-lock.yaml
+
+      - name: Installer les dépendances
+        run: pnpm install --frozen-lockfile
+
+      - name: Attendre stabilisation Railway (30s)
+        run: sleep 30
+
+      - name: Générer le client Prisma
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          touch .env
+          npx prisma generate
+        continue-on-error: true
+
+      - name: Debug DATABASE_URL
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "❌ DATABASE_URL est VIDE"
+          else
+            echo "✅ DATABASE_URL défini (${#DATABASE_URL} chars), début: ${DATABASE_URL:0:20}..."
+          fi
+
+    #   Si besoin de relancer le seed
+      - name: Rejouer le seed (reset données de test)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+        run: |
+          touch .env
+          node prisma/seed-v4.js
+        continue-on-error: true
+
+      - name: Lancer les tests d'intégration API
+        env:
+          API_BASE_URL: ${{ secrets.API_BASE_URL || 'https://cines-delicesapi-production.up.railway.app' }}
+        run: node tests/test-api.js
+
+      - name: Lancer les tests de sécurité API
+        env:
+          API_BASE_URL: ${{ secrets.API_BASE_URL || 'https://cines-delicesapi-production.up.railway.app' }}
+        run: node tests/test-api-security.js

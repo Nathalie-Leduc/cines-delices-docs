@@ -1,0 +1,416 @@
+# TESTS avec REST Client
+# Règles mot de passe :
+#   ✅ 8 caractères minimum
+#   ✅ 1 majuscule minimum
+#   ✅ 1 chiffre minimum
+#   ✅ 1 caractère spécial minimum (!@#$%^&*...)
+#
+# Usage :
+#   - Cliquer "Send Request" au-dessus de chaque requête
+#   - Les variables @token_member / @token_admin se récupèrent
+#     manuellement : copier le token de la réponse login
+#     et le coller dans la variable indiquée ci-dessous
+
+# Variables globales
+@baseUrl = http://localhost:3000/api
+@contentType = application/json
+
+# ──────────────────────────────────────────────────────────
+# Coller ici les tokens après les avoir récupérés via login
+# ⚠️ Renseigner aussi les IDs ci-dessous avant les tests submit
+# ──────────────────────────────────────────────────────────
+@token_member = COLLER_LE_TOKEN_MEMBRE_ICI
+@token_admin  = COLLER_LE_TOKEN_ADMIN_ICI
+@draft_recipe_id_member = COLLER_ID_RECETTE_DRAFT_DU_MEMBRE_ICI
+@pending_recipe_id_member = COLLER_ID_RECETTE_PENDING_DU_MEMBRE_ICI
+@draft_recipe_id_other_user = COLLER_ID_RECETTE_DRAFT_D_UN_AUTRE_UTILISATEUR_ICI
+
+# ══════════════════════════════════════════════════════════
+# 1. HEALTH CHECK
+# ══════════════════════════════════════════════════════════
+
+### ✅ Health check — attendu : 200 { status: "ok" }
+GET {{baseUrl}}/health
+Content-Type: {{contentType}}
+
+# ══════════════════════════════════════════════════════════
+# 2. REGISTER — POST /api/auth/register
+# ══════════════════════════════════════════════════════════
+
+### ✅ Register valide — attendu : 201 + token + user
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "newuser@cinesdelices.fr",
+  "pseudo": "NewUser",
+  "password": "Test1234!"
+}
+
+###
+
+### ❌ Register — email invalide — attendu : 400
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "pas-un-email",
+  "pseudo": "Marie",
+  "password": "Test1234!"
+}
+
+###
+
+### ❌ Register — pseudo trop court (1 char) — attendu : 400
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "marie2@cinesdelices.fr",
+  "pseudo": "x",
+  "password": "Test1234!"
+}
+
+###
+
+### ❌ Register — pseudo trop long (31 chars) — attendu : 400
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "marie2@cinesdelices.fr",
+  "pseudo": "abcdefghijklmnopqrstuvwxyzabcde",
+  "password": "Test1234!"
+}
+
+###
+
+### ❌ Register — password trop court (7 chars) — attendu : 400
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "marie3@cinesdelices.fr",
+  "pseudo": "Marie3",
+  "password": "Test12!"
+}
+
+###
+
+### ❌ Register — password sans majuscule — attendu : 400
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "marie4@cinesdelices.fr",
+  "pseudo": "Marie4",
+  "password": "test1234!"
+}
+
+###
+
+### ❌ Register — password sans chiffre — attendu : 400
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "marie5@cinesdelices.fr",
+  "pseudo": "Marie5",
+  "password": "TestABCD!"
+}
+
+###
+
+### ❌ Register — password sans caractère spécial — attendu : 400
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "marie6@cinesdelices.fr",
+  "pseudo": "Marie6",
+  "password": "Test12345"
+}
+
+###
+
+### ❌ Register — champs manquants — attendu : 400
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "marie7@cinesdelices.fr"
+}
+
+###
+
+### ❌ Register — email déjà utilisé — attendu : 409
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "marie@cinesdelices.fr",
+  "pseudo": "NouveauPseudo",
+  "password": "Test1234!"
+}
+
+###
+
+### ❌ Register — pseudo déjà utilisé — attendu : 409
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "nouveau@cinesdelices.fr",
+  "pseudo": "Marie",
+  "password": "Test1234!"
+}
+
+### ✅ Login membre — attendu : 200 + token
+# → Copier le token et le coller dans @token_member en haut
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "marie@cinesdelices.fr",
+  "password": "Member1234!"
+}
+
+###
+
+### ✅ Login admin — attendu : 200 + token (role: ADMIN)
+# → Copier le token et le coller dans @token_admin en haut
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@cinesdelices.fr",
+  "password": "Admin1234!"
+}
+
+###
+
+### ❌ Login — mauvais mot de passe — attendu : 401
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "marie@cinesdelices.fr",
+  "password": "mauvais_mdp"
+}
+
+###
+
+### ❌ Login — email inconnu — attendu : 401
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "inconnu@cinesdelices.fr",
+  "password": "Test1234!"
+}
+
+###
+
+### ❌ Login — email invalide (Zod) — attendu : 400
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "pas-un-email",
+  "password": "Test1234!"
+}
+
+###
+
+### ❌ Login — password manquant — attendu : 400
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "marie@cinesdelices.fr"
+}
+
+###
+
+### ✅ Login — password simple accepté au login
+# (les règles de complexité ne s'appliquent PAS au login — sécurité)
+# → attendu : 401 (mauvais mdp) et non 400 (validation)
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "marie@cinesdelices.fr",
+  "password": "simple"
+}
+
+
+# ══════════════════════════════════════════════════════════
+# 4. LOGOUT — GET /api/auth/logout
+# ══════════════════════════════════════════════════════════
+
+### ✅ Logout — attendu : 200 + message
+GET {{baseUrl}}/auth/logout
+
+
+# ══════════════════════════════════════════════════════════
+# 5. GET /me — profil connecté
+# ══════════════════════════════════════════════════════════
+
+### ✅ GET /me avec token valide — attendu : 200 + profil
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token_member}}
+
+###
+
+### ❌ GET /me sans token — attendu : 401
+GET {{baseUrl}}/auth/me
+
+###
+
+### ❌ GET /me token invalide — attendu : 401
+GET {{baseUrl}}/auth/me
+Authorization: Bearer token_completement_bidon
+
+###
+
+### ❌ GET /me mal formaté (pas de "Bearer") — attendu : 401
+GET {{baseUrl}}/auth/me
+Authorization: {{token_member}}
+
+
+# ══════════════════════════════════════════════════════════
+# 6. PATCH /me — modifier son profil
+# ══════════════════════════════════════════════════════════
+
+### ✅ PATCH /me — modifier le pseudo — attendu : 200
+PATCH {{baseUrl}}/auth/me
+Content-Type: {{contentType}}
+Authorization: Bearer {{token_member}}
+
+{
+  "pseudo": "Marie_Modifiee"
+}
+
+###
+
+### ✅ PATCH /me — modifier l'email — attendu : 200
+PATCH {{baseUrl}}/auth/me
+Content-Type: {{contentType}}
+Authorization: Bearer {{token_member}}
+
+{
+  "email": "marie_new@cinesdelices.fr"
+}
+
+###
+
+### ✅ PATCH /me — modifier les deux — attendu : 200
+PATCH {{baseUrl}}/auth/me
+Content-Type: {{contentType}}
+Authorization: Bearer {{token_member}}
+
+{
+  "pseudo": "Marie_Final",
+  "email": "marie_final@cinesdelices.fr"
+}
+
+###
+
+### ❌ PATCH /me sans token — attendu : 401
+PATCH {{baseUrl}}/auth/me
+Content-Type: {{contentType}}
+
+{
+  "pseudo": "Hackeur"
+}
+
+###
+
+### ❌ PATCH /me body vide (Zod refine) — attendu : 400
+PATCH {{baseUrl}}/auth/me
+Content-Type: {{contentType}}
+Authorization: Bearer {{token_member}}
+
+{}
+
+###
+
+### ❌ PATCH /me email invalide — attendu : 400
+PATCH {{baseUrl}}/auth/me
+Content-Type: {{contentType}}
+Authorization: Bearer {{token_member}}
+
+{
+  "email": "pas-un-email"
+}
+
+
+# ══════════════════════════════════════════════════════════
+# 6.1 PATCH /recipes/:id/submit — soumettre une recette
+# ══════════════════════════════════════════════════════════
+
+### ✅ Submit recette DRAFT de l'auteur — attendu : 200 + status PENDING
+PATCH {{baseUrl}}/recipes/{{draft_recipe_id_member}}/submit
+Authorization: Bearer {{token_member}}
+
+###
+
+### ❌ Submit sans token — attendu : 401
+PATCH {{baseUrl}}/recipes/{{draft_recipe_id_member}}/submit
+
+###
+
+### ❌ Submit recette d'un autre utilisateur — attendu : 403
+PATCH {{baseUrl}}/recipes/{{draft_recipe_id_other_user}}/submit
+Authorization: Bearer {{token_member}}
+
+###
+
+### ❌ Submit recette deja PENDING — attendu : 400
+PATCH {{baseUrl}}/recipes/{{pending_recipe_id_member}}/submit
+Authorization: Bearer {{token_member}}
+
+###
+
+### ❌ Submit recette introuvable — attendu : 404
+PATCH {{baseUrl}}/recipes/00000000-0000-0000-0000-000000000000/submit
+Authorization: Bearer {{token_member}}
+
+
+# ══════════════════════════════════════════════════════════
+# 7. DELETE /me — supprimer son compte
+# ══════════════════════════════════════════════════════════
+
+### ⚠️  DELETE /me — attendu : 200
+# Utiliser le token du compte newuser créé en section 2
+# et non marie@ ou admin@ (comptes seed à conserver)
+DELETE {{baseUrl}}/auth/me
+Authorization: Bearer {{token_member}}
+
+###
+
+### ❌ DELETE /me sans token — attendu : 401
+DELETE {{baseUrl}}/auth/me
+
+
+# ══════════════════════════════════════════════════════════
+# 8. MIDDLEWARE ADMIN
+# ══════════════════════════════════════════════════════════
+
+### ❌ Route admin avec token MEMBRE — attendu : 403
+GET {{baseUrl}}/admin/users
+Authorization: Bearer {{token_member}}
+
+###
+
+### ✅ Route admin avec token ADMIN — attendu : 200
+GET {{baseUrl}}/admin/users
+Authorization: Bearer {{token_admin}}
+
+
+# ══════════════════════════════════════════════════════════
+# 9. 404
+# ══════════════════════════════════════════════════════════
+
+### ❌ Route inexistante — attendu : 404
+GET {{baseUrl}}/route_qui_nexiste_pas

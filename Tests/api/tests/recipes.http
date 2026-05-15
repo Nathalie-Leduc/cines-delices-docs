@@ -1,0 +1,309 @@
+# REST Client suite - Recipes
+# Scope: CRUD + pagination + submit + RG-03
+# RG-03: a member can modify/delete only their own recipes. An admin can modify/delete any recipe.
+
+@baseUrl = http://localhost:3000/api
+@contentType = application/json
+@now = {{$timestamp}}
+@otherEmail = rg03-{{$timestamp}}@cinesdelices.fr
+
+# Tokens and IDs captured during execution
+@token_member =
+@token_member_other =
+@token_admin =
+@published_recipe_id =
+@rg03_recipe_id =
+@submit_recipe_id =
+
+### 0) Health check
+GET {{baseUrl}}/health
+
+> {%
+client.test("Health check returns 200", function () {
+  client.assert(response.status === 200, "Expected 200");
+  client.assert(response.body.status === "ok", "Expected status=ok");
+});
+%}
+
+### 1) Login member (owner)
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "marie@cinesdelices.fr",
+  "password": "Member1234!"
+}
+
+> {%
+client.test("Member login returns 200", function () {
+  client.assert(response.status === 200, "Expected 200");
+  client.assert(!!response.body.token, "Token must be present");
+});
+client.global.set("token_member", response.body.token);
+%}
+
+### 2) Login member (other user)
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "{{otherEmail}}",
+  "nom": "Rg03",
+  "prenom": "Member",
+  "password": "Test1234!",
+  "acceptedPolicies": true
+}
+
+> {%
+client.test("Other member register returns 201", function () {
+  client.assert(response.status === 201, "Expected 201");
+});
+%}
+
+### 2bis) Login member (other user)
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "{{otherEmail}}",
+  "password": "Test1234!"
+}
+
+> {%
+client.test("Other member login returns 200", function () {
+  client.assert(response.status === 200, "Expected 200");
+  client.assert(!!response.body.token, "Token must be present");
+});
+client.global.set("token_member_other", response.body.token);
+%}
+
+### 3) Login admin
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@cinesdelices.fr",
+  "password": "Admin1234!"
+}
+
+> {%
+client.test("Admin login returns 200", function () {
+  client.assert(response.status === 200, "Expected 200");
+  client.assert(!!response.body.token, "Token must be present");
+});
+client.global.set("token_admin", response.body.token);
+%}
+
+### 4) Pagination - list published recipes
+GET {{baseUrl}}/recipes?page=1&limit=2
+
+> {%
+client.test("List published recipes returns paginated response", function () {
+  client.assert(response.status === 200, "Expected 200");
+  client.assert(!!response.body.pagination, "Missing pagination object");
+  client.assert(response.body.pagination.page === 1, "Expected page=1");
+  client.assert(response.body.pagination.limit === 2, "Expected limit=2");
+  client.assert(Array.isArray(response.body.recipes), "recipes must be an array");
+  client.assert(response.body.recipes.length > 0, "Need at least one published recipe in seed");
+});
+client.global.set("published_recipe_id", response.body.recipes[0].id);
+%}
+
+### 5) Read one recipe by id
+GET {{baseUrl}}/recipes/{{published_recipe_id}}
+
+> {%
+client.test("Get one recipe returns 200", function () {
+  client.assert(response.status === 200, "Expected 200");
+  client.assert(!!response.body.id, "Expected recipe id");
+});
+%}
+
+### 6) Create recipe for RG-03 checks (owner = marie)
+POST {{baseUrl}}/recipes
+Content-Type: {{contentType}}
+Authorization: Bearer {{token_member}}
+
+{
+  "titre": "RG03 recipe {{now}}",
+  "instructions": "Mix, cook, serve.",
+  "categorie": "Plat",
+  "filmId": 2062,
+  "film": "Ratatouille",
+  "type": "movie",
+  "nombrePersonnes": 2,
+  "tempsPreparation": 10,
+  "tempsCuisson": 20
+}
+
+> {%
+client.test("Create recipe returns 201", function () {
+  client.assert(response.status === 201, "Expected 201");
+  client.assert(!!response.body.recipe?.id, "Expected created recipe id");
+});
+client.global.set("rg03_recipe_id", response.body.recipe.id);
+%}
+
+### 7) RG-03 - other member cannot update someone else's recipe
+PATCH {{baseUrl}}/recipes/{{rg03_recipe_id}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{token_member_other}}
+
+{
+  "titre": "HACK attempt {{now}}"
+}
+
+> {%
+client.test("RG-03 update denial returns 403", function () {
+  client.assert(response.status === 403, "Expected 403");
+});
+%}
+
+### 8) RG-03 - other member cannot delete someone else's recipe
+DELETE {{baseUrl}}/recipes/{{rg03_recipe_id}}
+Authorization: Bearer {{token_member_other}}
+
+> {%
+client.test("RG-03 delete denial returns 403", function () {
+  client.assert(response.status === 403, "Expected 403");
+});
+%}
+
+### 9) Owner can update own recipe
+PATCH {{baseUrl}}/recipes/{{rg03_recipe_id}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{token_member}}
+
+{
+  "titre": "RG03 recipe owner updated {{now}}",
+  "instructions": "Updated by owner"
+}
+
+> {%
+client.test("Owner update returns 200", function () {
+  client.assert(response.status === 200, "Expected 200");
+  client.assert(!!response.body.recipe, "Expected recipe payload");
+});
+%}
+
+### 10) Admin can update any recipe (RG-03 exception)
+PATCH {{baseUrl}}/recipes/{{rg03_recipe_id}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{token_admin}}
+
+{
+  "titre": "RG03 recipe admin updated {{now}}"
+}
+
+> {%
+client.test("Admin update returns 200", function () {
+  client.assert(response.status === 200, "Expected 200");
+});
+%}
+
+### 11) Admin can delete any recipe (RG-03 exception)
+DELETE {{baseUrl}}/recipes/{{rg03_recipe_id}}
+Authorization: Bearer {{token_admin}}
+
+> {%
+client.test("Admin delete returns 200", function () {
+  client.assert(response.status === 200, "Expected 200");
+});
+%}
+
+### 12) Create recipe for submit flow (starts as PENDING)
+POST {{baseUrl}}/recipes
+Content-Type: {{contentType}}
+Authorization: Bearer {{token_member}}
+
+{
+  "titre": "Submit flow recipe {{now}}",
+  "instructions": "Ready for moderation workflow.",
+  "categorie": "Plat",
+  "filmId": 2062,
+  "film": "Ratatouille",
+  "type": "movie"
+}
+
+> {%
+client.test("Create submit recipe returns 201", function () {
+  client.assert(response.status === 201, "Expected 201");
+});
+client.global.set("submit_recipe_id", response.body.recipe.id);
+%}
+
+### 13) Admin rejects recipe to move it to DRAFT (precondition for submit endpoint)
+PATCH {{baseUrl}}/admin/recipes/{{submit_recipe_id}}/reject
+Content-Type: {{contentType}}
+Authorization: Bearer {{token_admin}}
+
+{
+  "rejectionReason": "Please improve the recipe steps and details."
+}
+
+> {%
+client.test("Reject recipe returns 200", function () {
+  client.assert(response.status === 200, "Expected 200");
+  client.assert(response.body.status === "DRAFT", "Expected status DRAFT");
+});
+%}
+
+### 14) Submit requires auth
+PATCH {{baseUrl}}/recipes/{{submit_recipe_id}}/submit
+
+> {%
+client.test("Submit without auth returns 401", function () {
+  client.assert(response.status === 401, "Expected 401");
+});
+%}
+
+### 15) Submit forbidden for non-owner
+PATCH {{baseUrl}}/recipes/{{submit_recipe_id}}/submit
+Authorization: Bearer {{token_member_other}}
+
+> {%
+client.test("Submit by non-owner returns 403", function () {
+  client.assert(response.status === 403, "Expected 403");
+});
+%}
+
+### 16) Submit by owner from DRAFT to PENDING
+PATCH {{baseUrl}}/recipes/{{submit_recipe_id}}/submit
+Authorization: Bearer {{token_member}}
+
+> {%
+client.test("Submit by owner returns 200", function () {
+  client.assert(response.status === 200, "Expected 200");
+  client.assert(response.body.recipe?.status === "PENDING", "Expected status PENDING");
+});
+%}
+
+### 17) Submit already pending recipe returns 400
+PATCH {{baseUrl}}/recipes/{{submit_recipe_id}}/submit
+Authorization: Bearer {{token_member}}
+
+> {%
+client.test("Submit pending recipe returns 400", function () {
+  client.assert(response.status === 400, "Expected 400");
+});
+%}
+
+### 18) Submit unknown recipe returns 404
+PATCH {{baseUrl}}/recipes/00000000-0000-0000-0000-000000000000/submit
+Authorization: Bearer {{token_member}}
+
+> {%
+client.test("Submit unknown recipe returns 404", function () {
+  client.assert(response.status === 404, "Expected 404");
+});
+%}
+
+### 19) Cleanup submit-flow recipe as admin
+DELETE {{baseUrl}}/admin/recipes/{{submit_recipe_id}}
+Authorization: Bearer {{token_admin}}
+
+> {%
+client.test("Cleanup delete returns 204", function () {
+  client.assert(response.status === 204, "Expected 204");
+});
+%}

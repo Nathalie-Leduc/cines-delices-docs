@@ -1,0 +1,252 @@
+# REST Client suite - Admin
+# Scope: admin access control + moderation + admin CRUD endpoints
+
+@baseUrl = http://localhost:3000/api
+@contentType = application/json
+@now = {{$timestamp}}
+
+@token_admin =
+@token_member =
+@admin_user_id =
+@moderation_recipe_id =
+@category_test_id =
+
+### 1) Login admin
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@cinesdelices.fr",
+  "password": "Admin1234!"
+}
+
+> {%
+client.test("Admin login returns 200", function () {
+  client.assert(response.status === 200, "Expected 200");
+  client.assert(!!response.body.token, "Expected admin token");
+});
+client.global.set("token_admin", response.body.token);
+client.global.set("admin_user_id", response.body.user.id);
+%}
+
+### 2) Login member (used for access-control negative tests)
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "marie@cinesdelices.fr",
+  "password": "Member1234!"
+}
+
+> {%
+client.test("Member login returns 200", function () {
+  client.assert(response.status === 200, "Expected 200");
+  client.assert(!!response.body.token, "Expected member token");
+});
+client.global.set("token_member", response.body.token);
+%}
+
+### 3) Admin route without token -> 401
+GET {{baseUrl}}/admin/recipes
+
+> {%
+client.test("Admin route without token returns 401", function () {
+  client.assert(response.status === 401, "Expected 401");
+});
+%}
+
+### 4) Admin route with member token -> 403
+GET {{baseUrl}}/admin/recipes
+Authorization: Bearer {{token_member}}
+
+> {%
+client.test("Admin route with member token returns 403", function () {
+  client.assert(response.status === 403, "Expected 403");
+});
+%}
+
+### 5) Admin can list recipes
+GET {{baseUrl}}/admin/recipes
+Authorization: Bearer {{token_admin}}
+
+> {%
+client.test("Admin recipes list returns 200", function () {
+  client.assert(response.status === 200, "Expected 200");
+  client.assert(Array.isArray(response.body), "Expected array response");
+});
+%}
+
+### 6) Admin can list pending recipes
+GET {{baseUrl}}/admin/recipes/pending
+Authorization: Bearer {{token_admin}}
+
+> {%
+client.test("Admin pending list returns 200", function () {
+  client.assert(response.status === 200, "Expected 200");
+  client.assert(Array.isArray(response.body), "Expected array response");
+});
+%}
+
+### 7) Create recipe as member (used for moderation flow)
+POST {{baseUrl}}/recipes
+Content-Type: {{contentType}}
+Authorization: Bearer {{token_member}}
+
+{
+  "titre": "Moderation recipe {{now}}",
+  "instructions": "Moderation flow sample.",
+  "categorie": "Plat",
+  "filmId": 2062,
+  "film": "Ratatouille",
+  "type": "movie"
+}
+
+> {%
+client.test("Create moderation recipe returns 201", function () {
+  client.assert(response.status === 201, "Expected 201");
+  client.assert(!!response.body.recipe?.id, "Expected recipe id");
+});
+client.global.set("moderation_recipe_id", response.body.recipe.id);
+%}
+
+### 8) Admin rejects recipe (PENDING -> DRAFT)
+PATCH {{baseUrl}}/admin/recipes/{{moderation_recipe_id}}/reject
+Content-Type: {{contentType}}
+Authorization: Bearer {{token_admin}}
+
+{
+  "rejectionReason": "Need clearer instructions before publication."
+}
+
+> {%
+client.test("Admin reject returns 200 and DRAFT", function () {
+  client.assert(response.status === 200, "Expected 200");
+  client.assert(response.body.status === "DRAFT", "Expected status DRAFT");
+});
+%}
+
+### 9) Admin cannot publish a non-pending recipe -> 409
+PATCH {{baseUrl}}/admin/recipes/{{moderation_recipe_id}}/publish
+Authorization: Bearer {{token_admin}}
+
+> {%
+client.test("Publish non-pending recipe returns 409", function () {
+  client.assert(response.status === 409, "Expected 409");
+});
+%}
+
+### 10) Member re-submits recipe (DRAFT -> PENDING)
+PATCH {{baseUrl}}/recipes/{{moderation_recipe_id}}/submit
+Authorization: Bearer {{token_member}}
+
+> {%
+client.test("Member submit after reject returns 200", function () {
+  client.assert(response.status === 200, "Expected 200");
+  client.assert(response.body.recipe?.status === "PENDING", "Expected status PENDING");
+});
+%}
+
+### 11) Admin publishes pending recipe
+PATCH {{baseUrl}}/admin/recipes/{{moderation_recipe_id}}/publish
+Authorization: Bearer {{token_admin}}
+
+> {%
+client.test("Admin publish returns 200 and PUBLISHED", function () {
+  client.assert(response.status === 200, "Expected 200");
+  client.assert(response.body.status === "PUBLISHED", "Expected status PUBLISHED");
+});
+%}
+
+### 12) Admin cannot publish again -> 409
+PATCH {{baseUrl}}/admin/recipes/{{moderation_recipe_id}}/publish
+Authorization: Bearer {{token_admin}}
+
+> {%
+client.test("Publish already published recipe returns 409", function () {
+  client.assert(response.status === 409, "Expected 409");
+});
+%}
+
+### 13) Admin cannot change own role -> 403
+PATCH {{baseUrl}}/admin/users/{{admin_user_id}}/role
+Content-Type: {{contentType}}
+Authorization: Bearer {{token_admin}}
+
+{
+  "role": "MEMBER"
+}
+
+> {%
+client.test("Admin self-role change returns 403", function () {
+  client.assert(response.status === 403, "Expected 403");
+});
+%}
+
+### 14) Invalid role value -> 400
+PATCH {{baseUrl}}/admin/users/{{admin_user_id}}/role
+Content-Type: {{contentType}}
+Authorization: Bearer {{token_admin}}
+
+{
+  "role": "SUPER_ADMIN"
+}
+
+> {%
+client.test("Invalid role returns 400", function () {
+  client.assert(response.status === 400, "Expected 400");
+});
+%}
+
+### 15) Admin category create -> 201
+POST {{baseUrl}}/admin/categories
+Content-Type: {{contentType}}
+Authorization: Bearer {{token_admin}}
+
+{
+  "name": "TmpCategory{{now}}",
+  "color": "#123456"
+}
+
+> {%
+client.test("Create category returns 201", function () {
+  client.assert(response.status === 201, "Expected 201");
+  client.assert(!!response.body.id, "Expected category id");
+});
+client.global.set("category_test_id", response.body.id);
+%}
+
+### 16) Admin category update -> 200
+PATCH {{baseUrl}}/admin/categories/{{category_test_id}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{token_admin}}
+
+{
+  "name": "TmpCategoryRenamed{{now}}",
+  "color": "#654321"
+}
+
+> {%
+client.test("Update category returns 200", function () {
+  client.assert(response.status === 200, "Expected 200");
+});
+%}
+
+### 17) Admin category delete -> 204
+DELETE {{baseUrl}}/admin/categories/{{category_test_id}}
+Authorization: Bearer {{token_admin}}
+
+> {%
+client.test("Delete category returns 204", function () {
+  client.assert(response.status === 204, "Expected 204");
+});
+%}
+
+### 18) Cleanup moderation recipe
+DELETE {{baseUrl}}/admin/recipes/{{moderation_recipe_id}}
+Authorization: Bearer {{token_admin}}
+
+> {%
+client.test("Cleanup moderation recipe returns 204", function () {
+  client.assert(response.status === 204, "Expected 204");
+});
+%}
