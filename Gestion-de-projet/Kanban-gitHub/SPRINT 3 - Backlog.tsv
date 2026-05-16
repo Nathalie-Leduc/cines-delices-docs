@@ -1,10 +1,20 @@
 Title	URL	Assignees	Status	Linked pull requests	Sub-issues progress	Priority	Estimate	Size	Labels
 Mercredi : Tables avec données mock +  [ Début ] Connexion API	https://github.com/O-clock-Francfort/cines-delices/issues/55	Hameni-A							API, Front
 Jeudi : [ Fin ] Connexion API + Modales admin	https://github.com/O-clock-Francfort/cines-delices/issues/56	Hameni-A							API
+Merge ingredients	https://github.com/O-clock-Francfort/cines-delices/issues/302	Nathalie-Leduc	Done						Back, CORRECTION, Front, Mercredi
+Fuzzy-search	https://github.com/O-clock-Francfort/cines-delices/issues/295	Nathalie-Leduc	Done						Back, CORRECTION, Front, Mercredi
+Forcer le singulier les ingrédients	https://github.com/O-clock-Francfort/cines-delices/issues/294	Nathalie-Leduc	Done						Back, CORRECTION, Front, Mercredi
+Correctif notification Admin	https://github.com/O-clock-Francfort/cines-delices/issues/288	Nathalie-Leduc	Done						Back, CORRECTION, Mardi
+Correctif sur suppression de tous les ingrédients	https://github.com/O-clock-Francfort/cines-delices/issues/281	Nathalie-Leduc	Done						Back, CORRECTION, Mardi
+correctifs sur images recettes et films	https://github.com/O-clock-Francfort/cines-delices/issues/272	Nathalie-Leduc	Done						Back, CORRECTION, Front, Lundi
+AJOUT DE SHARP	https://github.com/O-clock-Francfort/cines-delices/issues/270	Nathalie-Leduc	Done						Back, Lundi, NEW
+seed-v4	https://github.com/O-clock-Francfort/cines-delices/issues/304	Nathalie-Leduc	Done						Back, CORRECTION, Mercredi
 Docker	https://github.com/O-clock-Francfort/cines-delices/issues/24	Nathalie-Leduc							Back
 Auth controller--me	https://github.com/O-clock-Francfort/cines-delices/issues/25	Nathalie-Leduc							Back
 Vérif. collective — back fonctionnel / code c-05	https://github.com/O-clock-Francfort/cines-delices/issues/129								Back, CRITIQUE, Front, Lundi
 Vérif Swagger sur Render / code sw-06	https://github.com/O-clock-Francfort/cines-delices/issues/161								Back, Jeudi, SWAGGER
+Parser le temps de cuisson et le temps de préparation automatique	https://github.com/O-clock-Francfort/cines-delices/issues/283	Nathalie-Leduc	Done						CORRECTION, Front, Mardi
+Deconnexion directe en Desktop sans passer par mon compte	https://github.com/O-clock-Francfort/cines-delices/issues/279	Nathalie-Leduc	Done						CORRECTION, Front, Mardi
 AuthContext + useAuth hook	https://github.com/O-clock-Francfort/cines-delices/issues/138	Nathalie-Leduc							CORRECTION, Front, Lundi
 Corriger adminService.js	https://github.com/O-clock-Francfort/cines-delices/issues/128	emilie-va							CRITIQUE, Front, Lundi
 Créer la structure UI du détail recette	https://github.com/O-clock-Francfort/cines-delices/issues/46	vincentduverger-dev							Front
@@ -13,6 +23,16 @@ Brancher le catalogue sur l’API	https://github.com/O-clock-Francfort/cines-del
 Brancher la page détail recette sur l’API	https://github.com/O-clock-Francfort/cines-delices/issues/50	vincentduverger-dev							Front
 Adapter la recherche catalogue avec API	https://github.com/O-clock-Francfort/cines-delices/issues/51	vincentduverger-dev							Front
 Ajouter gestion états UX catalogue	https://github.com/O-clock-Francfort/cines-delices/issues/52	vincentduverger-dev							Front
+modal "mot de passe oublié" stylisée comme les autres modal du site	https://github.com/O-clock-Francfort/cines-delices/issues/298	emilie-va	Done						
+page contact	https://github.com/O-clock-Francfort/cines-delices/issues/285	oriannejaunet	Done						
+CRÉATION DE RECETTE	https://github.com/O-clock-Francfort/cines-delices/issues/255	oriannejaunet	Done						
+DASHBOARD UTILISATEUR	https://github.com/O-clock-Francfort/cines-delices/issues/257	oriannejaunet	Done						
+MES INFORMATIONS	https://github.com/O-clock-Francfort/cines-delices/issues/259	oriannejaunet	Done						
+MODIFICATION DE RECETTE	https://github.com/O-clock-Francfort/cines-delices/issues/261	oriannejaunet	Done						
+CONTACT	https://github.com/O-clock-Francfort/cines-delices/issues/265	oriannejaunet	Done						
+partie admin	https://github.com/O-clock-Francfort/cines-delices/issues/267	oriannejaunet	Done						
+dynamisme sur fiche recette	https://github.com/O-clock-Francfort/cines-delices/issues/273	oriannejaunet	Done						
+Fix/front mdp security	https://github.com/O-clock-Francfort/cines-delices/pull/297		Done						
 Définir le flux utilisateur : recherche média → sélection → création recette	https://github.com/O-clock-Francfort/cines-delices/issues/26	emilie-va							
 Définir les données nécessaires à récupérer depuis TMDb (id_tmdb, title, poster_path, release_date)	https://github.com/O-clock-Francfort/cines-delices/issues/27	emilie-va							
 Permettre la sélection d’un média et stocker le média choisi dans l’état	https://github.com/O-clock-Francfort/cines-delices/issues/37	emilie-va							
@@ -24,23 +44,3 @@ Vendredi : Polish & cleanup	https://github.com/O-clock-Francfort/cines-delices/i
 Créer un composant footer	https://github.com/O-clock-Francfort/cines-delices/issues/72	vincentduverger-dev							
 Ajout Helmet	https://github.com/O-clock-Francfort/cines-delices/issues/92	Nathalie-Leduc							
 READ ME	https://github.com/O-clock-Francfort/cines-delices/issues/121	Hameni-A, oriannejaunet							
-Merge ingredients	https://github.com/O-clock-Francfort/cines-delices/issues/302	Nathalie-Leduc	Done						Back, CORRECTION, Front, Mercredi
-Fuzzy-search	https://github.com/O-clock-Francfort/cines-delices/issues/295	Nathalie-Leduc	Done						Back, CORRECTION, Front, Mercredi
-Forcer le singulier les ingrédients	https://github.com/O-clock-Francfort/cines-delices/issues/294	Nathalie-Leduc	Done						Back, CORRECTION, Front, Mercredi
-Correctif notification Admin	https://github.com/O-clock-Francfort/cines-delices/issues/288	Nathalie-Leduc	Done						Back, CORRECTION, Mardi
-Correctif sur suppression de tous les ingrédients	https://github.com/O-clock-Francfort/cines-delices/issues/281	Nathalie-Leduc	Done						Back, CORRECTION, Mardi
-correctifs sur images recettes et films	https://github.com/O-clock-Francfort/cines-delices/issues/272	Nathalie-Leduc	Done						Back, CORRECTION, Front, Lundi
-AJOUT DE SHARP	https://github.com/O-clock-Francfort/cines-delices/issues/270	Nathalie-Leduc	Done						Back, Lundi, NEW
-seed-v4	https://github.com/O-clock-Francfort/cines-delices/issues/304	Nathalie-Leduc	Done						Back, CORRECTION, Mercredi
-Parser le temps de cuisson et le temps de préparation automatique	https://github.com/O-clock-Francfort/cines-delices/issues/283	Nathalie-Leduc	Done						CORRECTION, Front, Mardi
-Deconnexion directe en Desktop sans passer par mon compte	https://github.com/O-clock-Francfort/cines-delices/issues/279	Nathalie-Leduc	Done						CORRECTION, Front, Mardi
-modal "mot de passe oublié" stylisée comme les autres modal du site	https://github.com/O-clock-Francfort/cines-delices/issues/298	emilie-va	Done						
-page contact	https://github.com/O-clock-Francfort/cines-delices/issues/285	oriannejaunet	Done						
-CRÉATION DE RECETTE	https://github.com/O-clock-Francfort/cines-delices/issues/255	oriannejaunet	Done						
-DASHBOARD UTILISATEUR	https://github.com/O-clock-Francfort/cines-delices/issues/257	oriannejaunet	Done						
-MES INFORMATIONS	https://github.com/O-clock-Francfort/cines-delices/issues/259	oriannejaunet	Done						
-MODIFICATION DE RECETTE	https://github.com/O-clock-Francfort/cines-delices/issues/261	oriannejaunet	Done						
-CONTACT	https://github.com/O-clock-Francfort/cines-delices/issues/265	oriannejaunet	Done						
-partie admin	https://github.com/O-clock-Francfort/cines-delices/issues/267	oriannejaunet	Done						
-dynamisme sur fiche recette	https://github.com/O-clock-Francfort/cines-delices/issues/273	oriannejaunet	Done						
-Fix/front mdp security	https://github.com/O-clock-Francfort/cines-delices/pull/297		Done						
