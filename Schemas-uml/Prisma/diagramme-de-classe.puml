@@ -1,0 +1,168 @@
+@startuml Classes_CinesDelices
+' ─────────────────────────────────────────────────────────────
+' Diagramme de classes — Domaine métier Cinés Délices
+' Périmètre : modèles Prisma + énumérations + relations
+' Les controllers/middlewares/services sont dans le
+' diagramme de composants (§5.6), pas dupliqués ici.
+' ─────────────────────────────────────────────────────────────
+
+skinparam backgroundColor #F6F1E8
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 13
+skinparam class {
+  BackgroundColor #FFFBEF
+  BorderColor #4A3428
+  HeaderBackgroundColor #C9A45C
+  FontSize 13
+  AttributeFontSize 12
+  AttributeFontColor #1F1D1E
+  StereotypeFontColor #8E1F2F
+}
+skinparam enum {
+  BackgroundColor #F3E9D2
+  BorderColor #4A3428
+  HeaderBackgroundColor #C9A45C
+  FontSize 13
+  AttributeFontSize 12
+}
+skinparam arrowColor #4A3428
+skinparam arrowFontSize 11
+skinparam packageBorderColor #4A3428
+skinparam packageBackgroundColor transparent
+skinparam packageFontSize 13
+skinparam packageFontStyle italic
+
+title Diagramme de classes — Domaine métier · Cinés Délices
+
+' ── Énumérations ───────────────────────────────────────────
+package "Énumérations" {
+  enum Role {
+    MEMBER
+    ADMIN
+  }
+  enum RecipeStatus {
+    DRAFT
+    PENDING
+    PUBLISHED
+  }
+  enum MediaType {
+    MOVIE
+    SERIES
+  }
+  enum NotificationType {
+    RECIPE_SUBMITTED
+  }
+}
+
+' ── Utilisateur ────────────────────────────────────────────
+class User <<model>> {
+  + id : UUID
+  + email : String <<unique>>
+  + pseudo : String <<unique>>
+  + nom : String?
+  - passwordHash : String
+  + role : Role
+  + createdAt : DateTime
+  + lastLoginAt : DateTime?
+  + resetToken : String?
+  + resetTokenExpires : DateTime?
+}
+
+' ── Recette et composition ─────────────────────────────────
+class Recipe <<model>> {
+  + id : UUID
+  + titre : String
+  + slug : String <<unique>>
+  + imageUrl : String?
+  + instructions : Text
+  + nombrePersonnes : Int?
+  + tempsPreparation : Int?
+  + tempsCuisson : Int?
+  + status : RecipeStatus
+  + rejectionReason : String?
+  + adminEditedSinceSubmission: Boolean
+  + adminEditedIngredientsSinceSubmission: Boolean
+  + adminEditedFieldsSummary: String?
+  + createdAt : DateTime
+  + updatedAt : DateTime
+}
+
+class Category <<model>> {
+  + id : UUID
+  + nom : String <<unique>>
+  + description : String?
+  + color : String?
+}
+
+class Ingredient <<model>> {
+  + id : UUID
+  + nom : String <<unique>>
+  + approved : Boolean = false
+}
+
+class RecipeIngredient <<model>> {
+  + quantity : String?
+  + unit : String?
+}
+note right of RecipeIngredient
+  Table pivot N..N
+  Clé composite (recipeId, ingredientId)
+  + attributs (quantité, unité)
+end note
+
+' ── Média (film / série) ──────────────────────────────────
+class Media <<model>> {
+  + id : UUID
+  + tmdbId : Int
+  + titre : String
+  + slug : String <<unique>>
+  + type : MediaType
+  + posterUrl : String?
+  + synopsis : Text?
+  + annee : Int?
+  + realisateur : String?
+}
+note right of Media : unique (tmdbId, type)
+
+class Genre <<model>> {
+  + id : UUID
+  + nom : String <<unique>>
+  + tmdbGenreId : Int <<unique>>
+}
+
+' ── Notifications ──────────────────────────────────────────
+class Notification <<model>> {
+  + id : UUID
+  + type : NotificationType
+  + message : Text
+  + isRead : Boolean = false
+  + createdAt : DateTime
+}
+
+' ── Relations structurelles (composition/aggregation) ─────
+User       "1"    *-- "0..*" Recipe       : crée\n(SET NULL)
+Category   "1"    o-- "0..*" Recipe       : classifie\n(RESTRICT)
+Media      "1"    o-- "0..*" Recipe       : inspire\n(RESTRICT)
+Recipe     "1"    *-- "0..*" RecipeIngredient : contient\n(CASCADE)
+Ingredient "1"    o-- "0..*" RecipeIngredient : utilisé dans\n(RESTRICT)
+Media      "0..*" --  "0..*" Genre        : appartient à\n(CASCADE)
+User       "1"    *-- "0..*" Notification : reçoit\n(CASCADE)
+Recipe     "0..1" *-- "0..*" Notification : concerne\n(SET NULL)
+
+' ── Utilisation des énumérations ─────────────────────────
+User         ..> Role              : <<use>>
+Recipe       ..> RecipeStatus      : <<use>>
+Media        ..> MediaType         : <<use>>
+Notification ..> NotificationType  : <<use>>
+
+legend bottom right
+  <b>Légende des cardinalités</b>
+    ──●   composition forte (suppression en cascade)
+    ──○   agrégation (la classe contenante ne possède pas l'autre)
+  <b>Politiques onDelete (Prisma)</b>
+    CASCADE   : suppression propagée
+    SET NULL  : le lien est mis à NULL (l'entité cible survit)
+    RESTRICT  : suppression refusée si des enfants existent
+endlegend
+
+@enduml

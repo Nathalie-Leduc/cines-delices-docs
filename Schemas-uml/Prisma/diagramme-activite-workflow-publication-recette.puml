@@ -1,0 +1,78 @@
+# ╔══════════════════════════════════════════════════════════╗
+# ║  9. PlantUML — Diagramme d'activité                      ║
+# ╚══════════════════════════════════════════════════════════╝
+
+---PLANTUML_ACTIVITE---
+@startuml Activite_Publication
+skinparam backgroundColor #F6F1E8
+skinparam activityBackgroundColor #FFFBEF
+skinparam activityBorderColor #C9A45C
+
+skinparam activityDiamondBackgroundColor #FFFBEF
+skinparam activityDiamondBorderColor #8E1F2F
+skinparam activityDiamondFontColor #8E1F2F
+
+skinparam arrowColor #8E1F2F
+title Activité — Workflow de publication d'une recette
+
+|Membre|
+start
+:Remplit le formulaire de création\n(titre, catégorie, film, ingrédients, photo);
+if (Champs valides ?) then (oui)
+  :POST /api/recipes → status = DRAFT;
+  :Recette enregistrée en brouillon;
+  if (Soumet maintenant ?) then (oui)
+    :PATCH .../submit → DRAFT à PENDING;
+  else (plus tard)
+    :Reste en DRAFT, modifiable;
+    if (Supprime le brouillon ?) then (oui)
+      :DELETE /api/recipes/:id\n(status = DRAFT uniquement);
+      :Recette supprimée définitivement;
+      stop
+    else (non)
+      :PATCH .../submit → DRAFT à PENDING;
+    endif
+  endif
+else (non)
+  :Zod retourne les erreurs;
+  stop
+endif
+
+|Admin|
+:Reçoit notification RECIPE_SUBMITTED\n(badge dans sidebar);
+:Consulte la recette PENDING\n(titre, ingrédients, photo, film associé);
+if (Conforme aux règles ?) then (oui)
+  :PATCH .../publish → PUBLISHED;
+  :Recette visible dans le catalogue;
+  |Membre|
+  :Notification "Recette publiée" reçue;
+else (non)
+  |Admin|
+  if (Action de refus ?) then (repasser en DRAFT)
+    :PATCH .../reject + rejectionReason\n→ PENDING à DRAFT;
+    |Membre|
+    :Notification "Recette refusée :\n[motif]" reçue;
+    :Peut corriger et resoumettre;
+  else (supprimer)
+    |Admin|
+    :DELETE /api/recipes/:id\n+ deletionReason;
+    |Membre|
+    :Notification "Recette supprimée :\n[motif]" reçue;
+    stop
+  endif
+endif
+stop
+
+legend right
+  <b>Légende</b>
+  |= Symbole            |= Signification                    |
+  | <color:#000000>⬤</color> Disque plein  | <b>start</b> — début du flux       |
+  | <color:#8E1F2F>◉</color> Disque cerclé | <b>stop</b> — fin du flux          |
+  | <color:#8E1F2F>◇</color> Losange       | <b>if</b> — décision / branchement |
+  | <color:#C9A45C>▏</color> Barre         | Swimlane — séparation des acteurs  |
+  | <color:#8E1F2F>→</color> Flèche        | Transition entre activités         |
+endlegend
+
+@enduml
+
+---FIN_PLANTUML_ACTIVITE---

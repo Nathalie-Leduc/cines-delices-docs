@@ -1,0 +1,32 @@
+@startuml
+' ─────────────────────────────────────────────────────────────
+' Use Cases 1/3 — Visiteur Anonyme · Cinés Délices
+' Style : acteur à gauche · cas d'utilisation empilés à droite
+' ─────────────────────────────────────────────────────────────
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 13
+skinparam actor {
+  BorderColor #4A3428
+  BackgroundColor #F6F1E8
+  FontStyle italic
+  FontSize 14
+}
+
+skinparam usecase {
+  BorderColor #4A3428
+  BackgroundColor #000000
+  FontColor white
+  FontStyle italic
+}
+
+skinparam arrowColor #4A3428
+skinparam arrowFontSize 11
+skinparam rectangle {
+  BorderColor #4A3428
+  BackgroundColor transparent
+  FontSize 13
+  FontStyle bold
+  FontColor #4A3428
+}

@@ -1,0 +1,120 @@
+@startuml Composants_CinesDelices
+' ─────────────────────────────────────────────────────────────
+' Diagramme de composants — Cinés Délices
+' Organisé en 4 zones verticales : Navigateur · API · BDD · externe
+' Regroupements clairs pour éviter les flèches croisées
+' ─────────────────────────────────────────────────────────────
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 13
+skinparam component {
+  BackgroundColor #FFFBEF
+  BorderColor #4A3428
+  FontSize 12
+}
+skinparam node {
+  BackgroundColor #F3E9D2
+  BorderColor #4A3428
+  FontSize 14
+  FontStyle bold
+}
+skinparam package {
+  BackgroundColor transparent
+  BorderColor #C9A45C
+  FontSize 12
+  FontStyle italic
+}
+skinparam database {
+  BackgroundColor #D8E8D0
+  BorderColor #4A3428
+  FontSize 14
+  FontStyle bold
+}
+skinparam cloud {
+  BackgroundColor #E8D8D0
+  BorderColor #4A3428
+  FontSize 14
+  FontStyle bold
+}
+skinparam note {
+  BackgroundColor #FFFBEF
+  BorderColor #C9A45C
+  FontSize 11
+}
+skinparam arrowColor #8E1F2F
+skinparam arrowFontSize 11
+
+title Diagramme de composants — Cinés Délices
+
+' ── Navigateur (client) ──────────────────────────────────
+node "Navigateur" as NAV {
+  package "Client React 19 + Vite 6" {
+    component "Pages publiques\n(Home · Recipes · Films · Series)" as PUB
+    component "Pages membre\n(MesRecettes · Créer · Profil)" as MEM
+    component "Pages admin\n(Dashboard · Recettes · Users...)" as ADM
+    component "AuthContext +\nReact Router v7\n(ProtectedRoute · AdminRoute)" as AUTH_CTX
+    component "SCSS Modules +\ntarteaucitronjs" as STYLE
+  }
+}
+
+' ── Serveur API ──────────────────────────────────────────
+node "Serveur API Express 5 (Railway)" as API_NODE {
+  package "Middlewares" as MW_PKG {
+    component "Helmet · CORS\nexpress-rate-limit" as MW_SEC
+    component "JWT middleware\n+ Admin middleware" as MW_AUTH
+    component "Zod 4\n(validation entrées)" as ZOD
+  }
+  package "Controllers" {
+    component "Auth · User\nRecipes · Admin\nTMDB · Media" as CTRL
+  }
+  package "Services métier" {
+    component "Multer + Sharp\n(upload → WebP)" as UPLOAD
+    component "TMDBCache\n(node-cache · TTL)" as TMDB_SVC
+    component "PosterService\n(download → WebP)" as POSTER
+    component "Nodemailer\n(reset MDP · contact)" as MAIL
+    component "InactivityJob\n(node-cron · RGPD)" as JOB
+  }
+  package "ORM" {
+    component "Prisma Client\n(requêtes typées)" as PRISMA
+  }
+  component "Swagger JSDoc\n(/api-docs)" as SWAGGER
+}
+
+' ── BDD ─────────────────────────────────────────────────
+database "PostgreSQL 18\n(Railway)" as DB {
+  component "9 tables · UUIDs\nFK + onDelete policies" as PG
+}
+
+' ── TMDB externe ────────────────────────────────────────
+cloud "TMDB API (externe)" as TMDB_EXT {
+  component "api.themoviedb.org/3\n/search · /movie · /tv" as TMDB_API
+}
+
+' ── Flux de communication ───────────────────────────────
+PUB --> AUTH_CTX
+MEM --> AUTH_CTX
+ADM --> AUTH_CTX
+AUTH_CTX --> MW_SEC : HTTP + JWT
+MW_SEC --> MW_AUTH
+MW_AUTH --> ZOD
+ZOD --> CTRL
+CTRL --> UPLOAD
+CTRL --> TMDB_SVC
+CTRL --> MAIL
+CTRL --> PRISMA
+TMDB_SVC --> TMDB_API : GET (avec cache)
+TMDB_SVC --> POSTER
+POSTER --> PRISMA : chemin WebP
+PRISMA --> PG : SQL paramétré
+JOB --> PRISMA : purge RGPD
+SWAGGER .. CTRL : documente
+
+note left of PG
+  <b>Politiques onDelete</b>
+   CASCADE  : media_genres · recipe_ingredients.recipeId · notifications.userId
+   SET NULL : recipes.userId (RGPD) · notifications.recipeId
+   RESTRICT : recipes.categoryId · recipes.mediaId · recipe_ingredients.ingredientId
+end note
+
+@enduml

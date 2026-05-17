@@ -1,0 +1,91 @@
+@startuml Sequence_TMDB
+' ─────────────────────────────────────────────────────────────
+' Séquence — Association film/série via TMDB (autocomplétion + snapshot)
+' Améliorations : police 14, padding participants
+' ─────────────────────────────────────────────────────────────
+
+skinparam backgroundColor #F6F1E8
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 14
+skinparam sequenceMessageAlign center
+skinparam sequence {
+  ArrowColor #8E1F2F
+  ArrowFontSize 13
+  LifeLineBorderColor #4A3428
+  LifeLineBackgroundColor #F3E9D2
+  ParticipantBorderColor #4A3428
+  ParticipantBackgroundColor #FFFBEF
+  ParticipantFontSize 13
+  ParticipantFontStyle bold
+  ParticipantPadding 25
+  BoxBorderColor #4A3428
+  GroupBorderColor #4A3428
+  GroupBackgroundColor #F3E9D2
+  GroupHeaderFontStyle bold
+  DividerBackgroundColor #C9A45C
+  DividerFontColor #1F1D1E
+  DividerFontStyle bold
+  DividerFontSize 14
+}
+skinparam actor {
+  BorderColor #4A3428
+  BackgroundColor #F6F1E8
+  FontSize 13
+  FontStyle italic
+}
+skinparam database {
+  BackgroundColor #D8E8D0
+  BorderColor #4A3428
+}
+
+title Séquence — Association film/série via TMDB
+
+actor       "Membre"                         as U
+participant "React 19\n(Formulaire)"          as F
+participant "Express 5\n(TMDBController)"     as API
+participant "node-cache\n(cache mémoire)"     as CACHE
+participant "API TMDB\n(externe)"             as TMDB
+participant "Sharp\n(PosterService)"          as SHARP
+database    "PostgreSQL 18\n(Prisma 7)"       as DB
+
+== 1 · Saisie dans le champ autocomplétion ==
+U -> F : Tape « Ratatouille »
+F -> F : Debounce 300 ms
+
+== 2 · Recherche TMDB avec cache ==
+F  -> API   : GET /api/tmdb/medias/search?q=ratatouille\nBearer JWT
+API -> CACHE : get("search:ratatouille")
+
+alt Cache hit
+  CACHE --> API : résultats en cache
+else Cache miss
+  API -> TMDB   : GET /search/multi?query=ratatouille
+  TMDB --> API  : résultats (films + séries)
+  API -> CACHE  : set("search:ratatouille", résultats, TTL)
+end
+
+API --> F : [{ tmdbId, titre, annee, type, posterPath }]
+F   --> U : Liste déroulante de résultats
+
+== 3 · Sélection d'un média ==
+U -> F : Sélectionne « Ratatouille (2007) — MOVIE »
+F -> API : GET /api/tmdb/medias/MOVIE/2062\nBearer JWT
+API -> DB : SELECT * FROM media\nWHERE tmdb_id=2062 AND type='MOVIE'
+
+alt Média déjà en base
+  DB --> API : media { id: "uuid-existant" }
+else Nouveau média (snapshot local)
+  API -> TMDB  : GET /movie/2062 + /movie/2062/credits
+  TMDB --> API : détails complets
+  API -> SHARP : downloadAndCachePoster("/path/poster.jpg")
+  SHARP --> API : "/public/posters/ratatouille-2007.webp"
+  API -> DB    : INSERT INTO media\n{ tmdbId, titre, slug, type,\n  posterUrl, synopsis, annee, realisateur }
+  DB --> API   : media { id: "uuid-nouveau" }
+  API -> DB    : INSERT INTO media_genres\npour chaque genre TMDB
+end
+
+== 4 · Retour au formulaire ==
+API --> F : { media: { id, titre, posterUrl, annee } }
+F   --> U : Affiche poster + titre dans le formulaire\nmediaId mémorisé pour la soumission
+
+@enduml
