@@ -1,5 +1,5 @@
 # ╔══════════════════════════════════════════════════════════╗
-# ║ 12. EXCALIDRAW — JSON Wireframes                       ║
+# ║ EXCALIDRAW — JSON Wireframes                       ║
 # ╚══════════════════════════════════════════════════════════╝
 # Instructions :
 # 1. Aller sur https://excalidraw.com

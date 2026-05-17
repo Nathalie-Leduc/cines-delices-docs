@@ -416,7 +416,7 @@ for (const def of mediaDefs) {
       { ingredientId: ing('vinaigre balsamique').id, quantity: '2',  unit: 'c.à.s'  },
       { ingredientId: ing("huile d'olive").id,       quantity: '4',  unit: 'c.à.s'  },
     ]},
-  }, 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=800');
+  }, 'https://images.unsplash.com/photo-1778104682662-0cc3a777fad3?w=800');
 
   await createRecipe({
     titre: 'Velouté de champignons de The Bear',
@@ -459,7 +459,7 @@ for (const def of mediaDefs) {
       { ingredientId: ing('ciboulette').id,     quantity: '1',   unit: 'botte' },
       { ingredientId: ing("huile d'olive").id,  quantity: '2',   unit: 'c.à.s' },
     ]},
-  }, 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=800');
+  }, 'https://images.unsplash.com/photo-1611001395395-a55dc4cb6092?w=800');
 
   await createRecipe({
     titre: "Soupe à l'oignon de Soul Kitchen",
@@ -473,7 +473,7 @@ for (const def of mediaDefs) {
       { ingredientId: ing('bouillon de legume').id, quantity: '1',   unit: 'litre'  },
       { ingredientId: ing('fromage rape').id,       quantity: '100', unit: 'g'      },
     ]},
-  }, 'https://images.unsplash.com/photo-1603105037880-880cd4edfb0d?w=800');
+  }, 'https://plus.unsplash.com/premium_photo-1727960325953-ef51e51d73f1?w=800');
 
   await createRecipe({
     titre: 'Ceviche de crevettes de Pulp Fiction',
@@ -501,7 +501,7 @@ for (const def of mediaDefs) {
       { ingredientId: ing('fromage rape').id,quantity: '100', unit: 'g'      },
       { ingredientId: ing('sel').id,         quantity: null,  unit: null     },
     ]},
-  }, 'https://images.unsplash.com/photo-1767016452826-815c7b4765ed?w=800');
+  }, 'https://images.unsplash.com/photo-1737700089286-db0454cecadc?w=800');
 
   await createRecipe({
     titre: 'Rillettes de saumon du Bear',
@@ -515,7 +515,7 @@ for (const def of mediaDefs) {
       { ingredientId: ing('capre').id,        quantity: '1',   unit: 'c.à.s'},
       { ingredientId: ing('ciboulette').id,   quantity: '1',   unit: 'botte'},
     ]},
-  }, 'https://images.unsplash.com/photo-1534482421-64566f976cfa?w=800');
+  }, 'https://images.unsplash.com/photo-1596591136135-1569bac242bd?w=800');
 
   await createRecipe({
     titre: 'Tartines chèvre-miel du Joker',
@@ -528,7 +528,7 @@ for (const def of mediaDefs) {
       { ingredientId: ing('thym').id,        quantity: '1',   unit: 'branche'},
       { ingredientId: ing('fromage rape').id,quantity: '150', unit: 'g'      },
     ]},
-  }, 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800');
+  }, 'https://plus.unsplash.com/premium_photo-1664127534763-cf0e673c9276?w=800');
 
   await createRecipe({
     titre: 'Antipasti du Grand Budapest Hotel',
