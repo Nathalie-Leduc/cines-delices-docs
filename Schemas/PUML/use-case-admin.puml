@@ -1,0 +1,87 @@
+@startuml UC_Admin
+' ─────────────────────────────────────────────────────────────
+' Use Cases 3/3 — Administrateur · Cinés Délices
+' Hérite de Membre (tous ses UCs restent accessibles)
+' ─────────────────────────────────────────────────────────────
+
+skinparam backgroundColor #F6F1E8
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 13
+skinparam actor {
+  BorderColor #4A3428
+  BackgroundColor #F6F1E8
+  FontStyle italic
+  FontSize 14
+}
+skinparam usecase {
+  BorderColor #4A3428
+  BackgroundColor #2E6A8E
+  FontColor white
+  FontStyle italic
+}
+skinparam arrowColor #4A3428
+skinparam arrowFontSize 11
+skinparam rectangle {
+  BorderColor #4A3428
+  BackgroundColor transparent
+  FontSize 13
+  FontStyle italic
+  FontColor #4A3428
+}
+skinparam noteBackgroundColor #FFFBEF
+skinparam noteBorderColor #C9A45C
+skinparam noteFontSize 11
+
+title Use Cases 3/3 — Administrateur · Cinés Délices
+
+left to right direction
+
+actor "Membre\nconnecté" as M
+actor "Administrateur" as A
+M <|-- A
+
+rectangle "Cinés Délices — Back-office (JWT + rôle ADMIN)" {
+  usecase "Valider les recettes\nPENDING (UC20)" as UC20
+  usecase "Gérer toutes\nles recettes (UC21)" as UC21
+  usecase "Valider les ingrédients\nen attente (UC22)" as UC22
+  usecase "Fusionner les\ningrédients doublons" as UC22b
+  usecase "Gérer les\ncatégories (UC23)" as UC23
+  usecase "Gérer les\nutilisateurs (UC24)" as UC24
+  usecase "Gérer les\nnotifications (UC25)" as UC25
+}
+
+A -- UC20
+A -- UC21
+A -- UC22
+A -- UC23
+A -- UC24
+A -- UC25
+
+UC22 ..> UC22b : <<extend>>
+UC20 ..> UC21 : <<include>>
+
+note bottom of UC20
+  PATCH /api/admin/recipes/:id/publish → PUBLISHED
+  PATCH /api/admin/recipes/:id/reject  → DRAFT + motif
+end note
+
+note bottom of UC22
+  PATCH /api/admin/ingredients/:id/approve
+  POST  /api/admin/ingredients/merge (fusion doublons)
+  Suppression bloquée (RESTRICT) si ingrédient utilisé
+end note
+
+note bottom of UC23
+  CRUD complet (catégories)
+  DELETE bloqué si recettes liées
+  (onDelete: RESTRICT en BDD)
+end note
+
+note top of A
+  Double middleware :
+  · authMiddleware (JWT valide)
+  · adminMiddleware (role = ADMIN)
+  → 403 Forbidden sinon
+end note
+
+@enduml
