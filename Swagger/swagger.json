@@ -1,0 +1,4329 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "CinéDélices API",
+    "version": "1.0.0",
+    "description": "Documentation de l'API CinéDélices"
+  },
+  "servers": [
+    {
+      "url": "https://cines-delicesapi-production.up.railway.app",
+      "description": "Serveur de production (Railway)"
+    },
+    {
+      "url": "http://localhost:3000",
+      "description": "Serveur local de developpement"
+    }
+  ],
+  "paths": {
+    "/api/admin/recipes/pending": {
+      "get": {
+        "summary": "Lister les recettes en attente de moderation",
+        "tags": [
+          "Admin - Recipes"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des recettes en attente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminRecipe"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token manquant, invalide ou expire.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acces reserve aux administrateurs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur serveur.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/recipes/{id}/publish": {
+      "patch": {
+        "summary": "Publier une recette en attente",
+        "tags": [
+          "Admin - Recipes"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "ID UUID de la recette."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recette publiee.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminRecipe"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token manquant, invalide ou expire.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acces reserve aux administrateurs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recette introuvable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Recette non publiable dans son etat actuel.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur serveur.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/recipes/{id}/reject": {
+      "patch": {
+        "summary": "Refuser une recette avec motif",
+        "tags": [
+          "Admin - Recipes"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "ID UUID de la recette."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminRejectRecipePayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recette refusee.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminRecipe"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Motif de refus invalide.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token manquant, invalide ou expire.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acces reserve aux administrateurs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recette introuvable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur serveur.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/users": {
+      "get": {
+        "summary": "Lister les utilisateurs cote admin",
+        "tags": [
+          "Admin - Users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Recherche sur pseudo ou email."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des utilisateurs avec compteurs de recettes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminUser"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token manquant, invalide ou expire.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acces reserve aux administrateurs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur serveur.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/recipes": {
+      "get": {
+        "summary": "Lister toutes les recettes publiees (admin)",
+        "tags": [
+          "Admin - Recipes"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Recherche sur le titre."
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filtrer par categorie."
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "PENDING",
+                "PUBLISHED"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des recettes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminRecipe"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/schemas/AdminErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/schemas/AdminErrorResponse"
+          }
+        }
+      }
+    },
+    "/api/admin/recipes/{id}": {
+      "patch": {
+        "summary": "Modifier une recette (admin)",
+        "tags": [
+          "Admin - Recipes"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminRecipe"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminRecipe"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recette modifiee.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminRecipe"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Donnees invalides."
+          },
+          "401": {
+            "description": "Non authentifie."
+          },
+          "403": {
+            "description": "Acces refuse."
+          },
+          "404": {
+            "description": "Recette introuvable."
+          }
+        }
+      },
+      "delete": {
+        "summary": "Supprimer une recette et notifier le membre",
+        "tags": [
+          "Admin - Recipes"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "notifMessage": {
+                    "type": "string",
+                    "description": "Message optionnel envoye au membre.",
+                    "example": "Votre recette a ete supprimee car elle ne respecte pas nos regles."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Recette supprimee. Le membre a ete notifie."
+          },
+          "401": {
+            "description": "Non authentifie."
+          },
+          "403": {
+            "description": "Acces refuse."
+          },
+          "404": {
+            "description": "Recette introuvable."
+          }
+        }
+      }
+    },
+    "/api/admin/users/{id}/role": {
+      "patch": {
+        "summary": "Modifier le role d'un utilisateur",
+        "tags": [
+          "Admin - Users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "role"
+                ],
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "ADMIN",
+                      "MEMBER"
+                    ],
+                    "example": "ADMIN"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Role mis a jour."
+          },
+          "401": {
+            "description": "Non authentifie."
+          },
+          "403": {
+            "description": "Acces refuse."
+          },
+          "404": {
+            "description": "Utilisateur introuvable."
+          }
+        }
+      }
+    },
+    "/api/admin/users/{id}/recipes": {
+      "get": {
+        "summary": "Recettes d'un membre (admin)",
+        "tags": [
+          "Admin - Users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des recettes du membre.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminRecipe"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifie."
+          },
+          "403": {
+            "description": "Acces refuse."
+          }
+        }
+      }
+    },
+    "/api/admin/users/{id}": {
+      "delete": {
+        "summary": "Supprimer un utilisateur",
+        "tags": [
+          "Admin - Users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Utilisateur supprime."
+          },
+          "401": {
+            "description": "Non authentifie."
+          },
+          "403": {
+            "description": "Acces refuse."
+          },
+          "404": {
+            "description": "Utilisateur introuvable."
+          }
+        }
+      }
+    },
+    "/api/admin/notifications": {
+      "get": {
+        "summary": "Lister les notifications admin",
+        "tags": [
+          "Admin - Notifications"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des notifications avec compteur non lues.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "notifications": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AdminNotification"
+                      }
+                    },
+                    "unreadCount": {
+                      "type": "integer",
+                      "example": 3
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifie."
+          },
+          "403": {
+            "description": "Acces refuse."
+          }
+        }
+      }
+    },
+    "/api/admin/notifications/{id}": {
+      "delete": {
+        "summary": "Supprimer une notification admin",
+        "tags": [
+          "Admin - Notifications"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Notification supprimee."
+          },
+          "401": {
+            "description": "Non authentifie."
+          },
+          "403": {
+            "description": "Acces refuse."
+          },
+          "404": {
+            "description": "Notification introuvable."
+          }
+        }
+      }
+    },
+    "/api/admin/categories": {
+      "get": {
+        "summary": "Lister les categories (admin)",
+        "tags": [
+          "Admin - Categories"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des categories.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminCategory"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifie."
+          },
+          "403": {
+            "description": "Acces refuse."
+          }
+        }
+      },
+      "post": {
+        "summary": "Creer une categorie",
+        "tags": [
+          "Admin - Categories"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "Boisson"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Categorie creee.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCategory"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Donnees invalides."
+          },
+          "401": {
+            "description": "Non authentifie."
+          },
+          "403": {
+            "description": "Acces refuse."
+          }
+        }
+      }
+    },
+    "/api/admin/categories/{id}": {
+      "patch": {
+        "summary": "Modifier une categorie",
+        "tags": [
+          "Admin - Categories"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "Entree"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Categorie modifiee."
+          },
+          "404": {
+            "description": "Categorie introuvable."
+          }
+        }
+      },
+      "delete": {
+        "summary": "Supprimer une categorie",
+        "tags": [
+          "Admin - Categories"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Categorie supprimee."
+          },
+          "404": {
+            "description": "Categorie introuvable."
+          }
+        }
+      }
+    },
+    "/api/admin/categories/{id}/recipes": {
+      "get": {
+        "summary": "Recettes d'une categorie (admin)",
+        "tags": [
+          "Admin - Categories"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des recettes de la categorie."
+          }
+        }
+      }
+    },
+    "/api/admin/ingredients": {
+      "get": {
+        "summary": "Lister les ingredients en attente de validation",
+        "tags": [
+          "Admin - Ingredients"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des ingredients non approuves.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminIngredient"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Creer un ingredient directement approuve",
+        "tags": [
+          "Admin - Ingredients"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "fraise des bois"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ingredient existant approuve."
+          },
+          "201": {
+            "description": "Ingredient cree et approuve.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminIngredient"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Nom manquant."
+          }
+        }
+      }
+    },
+    "/api/admin/ingredients/validated": {
+      "get": {
+        "summary": "Lister les ingredients deja valides",
+        "tags": [
+          "Admin - Ingredients"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Recherche sur le nom."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des ingredients approuves.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminIngredient"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/ingredients/merge": {
+      "post": {
+        "summary": "Fusionner deux ingredients (doublon)",
+        "tags": [
+          "Admin - Ingredients"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "sourceId",
+                  "targetId"
+                ],
+                "properties": {
+                  "sourceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Ingredient a absorber (le doublon)."
+                  },
+                  "targetId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Ingredient cible qui survit."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Fusion effectuee, ingredient source supprime."
+          },
+          "400": {
+            "description": "IDs manquants ou identiques."
+          },
+          "404": {
+            "description": "Un des ingredients introuvable."
+          }
+        }
+      }
+    },
+    "/api/admin/ingredients/{id}": {
+      "patch": {
+        "summary": "Modifier un ingredient",
+        "tags": [
+          "Admin - Ingredients"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "fraise"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ingredient modifie."
+          },
+          "404": {
+            "description": "Ingredient introuvable."
+          }
+        }
+      },
+      "delete": {
+        "summary": "Refuser et supprimer un ingredient",
+        "tags": [
+          "Admin - Ingredients"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "rejectionReason": {
+                    "type": "string",
+                    "description": "Message de refus envoye au membre.",
+                    "example": "Cet ingredient existe deja sous le nom fraise."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Ingredient supprime, membre notifie."
+          },
+          "404": {
+            "description": "Ingredient introuvable."
+          },
+          "409": {
+            "description": "Ingredient approuve utilise dans des recettes."
+          }
+        }
+      }
+    },
+    "/api/admin/ingredients/{id}/approve": {
+      "patch": {
+        "summary": "Approuver un ingredient",
+        "tags": [
+          "Admin - Ingredients"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ingredient approuve."
+          },
+          "404": {
+            "description": "Ingredient introuvable."
+          }
+        }
+      }
+    },
+    "/api/admin/ingredients/{id}/recipes": {
+      "get": {
+        "summary": "Recettes utilisant un ingredient (admin)",
+        "tags": [
+          "Admin - Ingredients"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des recettes utilisant cet ingredient."
+          }
+        }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "summary": "Creer un nouveau compte utilisateur",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "nom",
+                  "prenom",
+                  "password",
+                  "acceptedPolicies"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "marie@cinesdelices.fr"
+                  },
+                  "nom": {
+                    "type": "string",
+                    "example": "Dupont"
+                  },
+                  "prenom": {
+                    "type": "string",
+                    "example": "Marie"
+                  },
+                  "pseudo": {
+                    "type": "string",
+                    "example": "marie.dupont"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "MotDePasse123!"
+                  },
+                  "acceptedPolicies": {
+                    "type": "boolean",
+                    "example": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Compte cree avec succes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AuthTokenResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "example": "Compte cree avec succes"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Donnees invalides",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email ou pseudo deja utilise",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur serveur",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "summary": "Authentifier un utilisateur",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "marie@cinesdelices.fr"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "MotDePasse123!"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Connexion reussie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Donnees invalides",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Email ou mot de passe incorrect",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur serveur",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "get": {
+        "summary": "Deconnecter l'utilisateur",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Deconnexion reussie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Deconnecte avec succes"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "summary": "Recuperer le profil utilisateur connecte",
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Informations du profil utilisateur",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/AuthUser"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "_count": {
+                          "type": "object",
+                          "properties": {
+                            "recipes": {
+                              "type": "integer",
+                              "example": 3
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifie (JWT manquant ou invalide)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Utilisateur introuvable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur serveur",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Mettre a jour le profil utilisateur connecte",
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nom": {
+                    "type": "string",
+                    "example": "Dupont"
+                  },
+                  "pseudo": {
+                    "type": "string",
+                    "example": "marie.dupont"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "marie@cinesdelices.fr"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profil mis a jour",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message",
+                    "user"
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Profil mis a jour"
+                    },
+                    "user": {
+                      "$ref": "#/components/schemas/AuthUser"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Donnees invalides",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifie (JWT manquant ou invalide)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email ou pseudo deja utilise",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur serveur",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Mettre a jour partiellement le profil utilisateur connecte",
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nom": {
+                    "type": "string",
+                    "example": "Dupont"
+                  },
+                  "pseudo": {
+                    "type": "string",
+                    "example": "marie.dupont"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "marie@cinesdelices.fr"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profil mis a jour",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message",
+                    "user"
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Profil mis a jour"
+                    },
+                    "user": {
+                      "$ref": "#/components/schemas/AuthUser"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Donnees invalides",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifie (JWT manquant ou invalide)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email ou pseudo deja utilise",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur serveur",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Supprimer le compte utilisateur connecte",
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Compte supprime",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Compte supprime"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifie (JWT manquant ou invalide)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur serveur",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/me/password": {
+      "put": {
+        "summary": "Mettre a jour le mot de passe de l'utilisateur connecte",
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "currentPassword",
+                  "newPassword",
+                  "confirmPassword"
+                ],
+                "properties": {
+                  "currentPassword": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "AncienMdp123!"
+                  },
+                  "newPassword": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "NouveauMdp123!"
+                  },
+                  "confirmPassword": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "NouveauMdp123!"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Mot de passe mis a jour",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Mot de passe mis a jour"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Donnees invalides ou mot de passe actuel incorrect",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ValidationErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifie (JWT manquant ou invalide)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Utilisateur introuvable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur serveur",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/categories": {
+      "get": {
+        "summary": "Lister toutes les categories",
+        "tags": [
+          "Categories"
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des categories disponibles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Category"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Creer une categorie (admin)",
+        "tags": [
+          "Categories"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "Boisson"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Categorie creee."
+          },
+          "400": {
+            "description": "Nom manquant."
+          },
+          "401": {
+            "description": "Non authentifie."
+          },
+          "403": {
+            "description": "Acces refuse."
+          }
+        }
+      }
+    },
+    "/api/categories/{id}": {
+      "patch": {
+        "summary": "Modifier une categorie (admin)",
+        "tags": [
+          "Categories"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "Entree"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Categorie modifiee."
+          },
+          "404": {
+            "description": "Categorie introuvable."
+          }
+        }
+      },
+      "delete": {
+        "summary": "Supprimer une categorie (admin)",
+        "tags": [
+          "Categories"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Categorie supprimee."
+          },
+          "404": {
+            "description": "Categorie introuvable."
+          }
+        }
+      }
+    },
+    "/api/contact": {
+      "post": {
+        "summary": "Envoyer un message de contact",
+        "tags": [
+          "Contact"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "email",
+                  "message"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "Marie Dupont"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "marie@exemple.fr"
+                  },
+                  "message": {
+                    "type": "string",
+                    "example": "Bonjour, je souhaite signaler un probleme."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Message envoye avec succes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Message envoye avec succes."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Donnees invalides."
+          },
+          "500": {
+            "description": "Erreur lors de l'envoi."
+          }
+        }
+      }
+    },
+    "/api/ingredients/search": {
+      "get": {
+        "summary": "Rechercher des ingredients valides",
+        "tags": [
+          "Ingredients"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Terme de recherche (min 2 caracteres).",
+            "example": "choc"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des ingredients correspondants.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/IngredientSearchResult"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Terme de recherche manquant ou trop court."
+          }
+        }
+      }
+    },
+    "/api/ingredients": {
+      "post": {
+        "summary": "Soumettre un nouvel ingredient (membre)",
+        "tags": [
+          "Ingredients"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "fraise des bois"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Ingredient soumis en attente de validation admin.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngredientSearchResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Nom manquant ou invalide."
+          },
+          "401": {
+            "description": "Non authentifie."
+          }
+        }
+      }
+    },
+    "/api/media/movies": {
+      "get": {
+        "summary": "Catalogue des films avec recettes publiees",
+        "tags": [
+          "Media"
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des films.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MediaItem"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/media/movies/{slug}": {
+      "get": {
+        "summary": "Detail d'un film par slug",
+        "tags": [
+          "Media"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "matrix-1999"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detail du film avec ses recettes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaItem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Film introuvable."
+          }
+        }
+      }
+    },
+    "/api/media/series": {
+      "get": {
+        "summary": "Catalogue des series avec recettes publiees",
+        "tags": [
+          "Media"
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des series.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MediaItem"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/media/series/{slug}": {
+      "get": {
+        "summary": "Detail d'une serie par slug",
+        "tags": [
+          "Media"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "breaking-bad-2008"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detail de la serie avec ses recettes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaItem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Serie introuvable."
+          }
+        }
+      }
+    },
+    "/api/recipes": {
+      "get": {
+        "summary": "Lister les recettes publiees",
+        "tags": [
+          "Recipes"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 12
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID ou nom de categorie."
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Recherche sur le titre, la categorie ou le media."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste paginee des recettes publiees.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeListResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur serveur.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Creer une recette",
+        "tags": [
+          "Recipes"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecipePayload"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/RecipePayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Recette creee et envoyee en validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeMutationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Donnees invalides.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Utilisateur non authentifie.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Categorie ou media introuvable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur serveur.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recipes/mine": {
+      "get": {
+        "summary": "Lister les recettes de l'utilisateur connecte",
+        "tags": [
+          "Recipes"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des recettes du membre connecte.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Recipe"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Utilisateur non authentifie.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recipes/{id}": {
+      "get": {
+        "summary": "Recuperer une recette par id ou slug",
+        "tags": [
+          "Recipes"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID UUID ou slug de la recette."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recette trouvee.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Recipe"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recette introuvable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur serveur.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Mettre a jour une recette",
+        "tags": [
+          "Recipes"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID UUID ou slug de la recette."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecipePayload"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/RecipePayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recette mise a jour.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeMutationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Utilisateur non authentifie.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Modification non autorisee.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recette, categorie ou media introuvable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur serveur.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Supprimer une recette",
+        "tags": [
+          "Recipes"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID UUID ou slug de la recette."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recette supprimee.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteRecipeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Utilisateur non authentifie.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Suppression non autorisee.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recette introuvable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur serveur.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recipes/{id}/submit": {
+      "patch": {
+        "summary": "Soumettre une recette en attente de validation admin",
+        "tags": [
+          "Recipes"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "ID UUID de la recette a soumettre."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recette soumise pour validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeMutationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "La recette est deja en attente ou n'est pas un brouillon.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Utilisateur non authentifie.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Soumission non autorisee.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recette introuvable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tmdb/medias/search": {
+      "get": {
+        "summary": "Rechercher des medias sur TMDB",
+        "tags": [
+          "TMDB - Search"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "searchTerm",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Terme de recherche. Alias accepte: q.",
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Alias de searchTerm.",
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "movie",
+                "tv"
+              ]
+            },
+            "description": "Filtre optionnel sur le type de media."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultats de recherche TMDB.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TmdbMedia"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parametre de recherche manquant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TmdbErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur serveur.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TmdbErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tmdb/medias/{type}": {
+      "get": {
+        "summary": "Recuperer les medias par type",
+        "tags": [
+          "TMDB - Catalog"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "type",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "movie",
+                "tv"
+              ]
+            },
+            "description": "Type de media a recuperer."
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Recherche texte (movie uniquement sur endpoint catalogue pagine)."
+          },
+          {
+            "in": "query",
+            "name": "searchTerm",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Alias de q."
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "description": "Page du catalogue movie."
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 15
+            },
+            "description": "Taille de page du catalogue movie."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste de medias ou catalogue movie pagine selon les parametres.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TmdbMedia"
+                      }
+                    },
+                    {
+                      "$ref": "#/components/schemas/TmdbMovieCatalogResponse"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur serveur.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TmdbErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tmdb/medias/{type}/{id}": {
+      "get": {
+        "summary": "Recuperer un media TMDB par type et id",
+        "tags": [
+          "TMDB - Catalog"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "type",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "movie",
+                "tv"
+              ]
+            },
+            "description": "Type de media a recuperer."
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "Identifiant TMDB du media."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detail du media TMDB.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TmdbMedia"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ID manquant ou invalide.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TmdbErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur serveur.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TmdbErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/me": {
+      "get": {
+        "summary": "Recuperer le profil du membre connecte",
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Profil du membre.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthUser"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifie."
+          }
+        }
+      }
+    },
+    "/api/users/me/recipes": {
+      "get": {
+        "summary": "Recettes du membre connecte",
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des recettes du membre (tous statuts).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Recipe"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifie."
+          }
+        }
+      }
+    },
+    "/api/users/me/notifications": {
+      "get": {
+        "summary": "Notifications du membre connecte",
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des notifications du membre.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MemberNotification"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifie."
+          }
+        }
+      }
+    },
+    "/api/users/me/notifications/{id}": {
+      "delete": {
+        "summary": "Supprimer une notification du membre",
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Notification supprimee."
+          },
+          "401": {
+            "description": "Non authentifie."
+          },
+          "404": {
+            "description": "Notification introuvable."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AdminErrorResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Recette introuvable."
+          },
+          "error": {
+            "type": "string",
+            "example": "Acces reserve aux administrateurs"
+          }
+        }
+      },
+      "AdminSubmittedBy": {
+        "type": "object",
+        "required": [
+          "firstName",
+          "lastName",
+          "fullName"
+        ],
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "example": "Marie"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Dupont"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Marie Dupont"
+          }
+        }
+      },
+      "AdminRecipeIngredient": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "quantity",
+          "unit"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "chocolat noir"
+          },
+          "quantity": {
+            "type": "string",
+            "example": 200
+          },
+          "unit": {
+            "type": "string",
+            "example": "g"
+          }
+        }
+      },
+      "AdminRecipe": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "slug",
+          "category",
+          "movie",
+          "duration",
+          "media",
+          "status",
+          "submittedBy",
+          "submittedByLabel",
+          "ingredients"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "example": "Brownie Matrix"
+          },
+          "slug": {
+            "type": "string",
+            "example": "brownie-matrix"
+          },
+          "category": {
+            "type": "string",
+            "example": "Dessert"
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "movie": {
+            "type": "string",
+            "example": "Matrix"
+          },
+          "movieId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "duration": {
+            "type": "string",
+            "example": "45 min"
+          },
+          "media": {
+            "type": "string",
+            "enum": [
+              "F",
+              "S"
+            ],
+            "example": "F"
+          },
+          "image": {
+            "type": "string",
+            "example": "/img/entrees.webp"
+          },
+          "mediaPoster": {
+            "type": "string",
+            "nullable": true,
+            "example": "https://image.tmdb.org/t/p/w500/abc.jpg"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "PENDING",
+              "PUBLISHED"
+            ],
+            "example": "PENDING"
+          },
+          "instructions": {
+            "type": "string"
+          },
+          "people": {
+            "type": "integer",
+            "example": 4
+          },
+          "preparationTime": {
+            "type": "integer",
+            "example": 20
+          },
+          "cookingTime": {
+            "type": "integer",
+            "example": 25
+          },
+          "rejectionReason": {
+            "type": "string",
+            "example": "Ingredient non autorise."
+          },
+          "submittedBy": {
+            "$ref": "#/components/schemas/AdminSubmittedBy"
+          },
+          "submittedByLabel": {
+            "type": "string",
+            "example": "Marie Dupont"
+          },
+          "ingredients": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminRecipeIngredient"
+            }
+          }
+        }
+      },
+      "AdminRejectRecipePayload": {
+        "type": "object",
+        "required": [
+          "rejectionReason"
+        ],
+        "properties": {
+          "rejectionReason": {
+            "type": "string",
+            "minLength": 10,
+            "example": "Le motif de refus est detaille ici."
+          }
+        }
+      },
+      "AdminUser": {
+        "type": "object",
+        "required": [
+          "id",
+          "nom",
+          "displayName",
+          "prenom",
+          "email",
+          "role",
+          "totalRecipes",
+          "recipeCounts"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nom": {
+            "type": "string",
+            "example": "MARIE"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "marie"
+          },
+          "prenom": {
+            "type": "string",
+            "example": "marie"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "marie@cinesdelices.fr"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "ADMIN",
+              "MEMBER"
+            ]
+          },
+          "totalRecipes": {
+            "type": "integer",
+            "example": 8
+          },
+          "recipeCounts": {
+            "type": "object",
+            "required": [
+              "entree",
+              "plat",
+              "dessert",
+              "boisson"
+            ],
+            "properties": {
+              "entree": {
+                "type": "integer",
+                "example": 2
+              },
+              "plat": {
+                "type": "integer",
+                "example": 3
+              },
+              "dessert": {
+                "type": "integer",
+                "example": 2
+              },
+              "boisson": {
+                "type": "integer",
+                "example": 1
+              }
+            }
+          }
+        }
+      },
+      "AdminCategory": {
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Dessert"
+          }
+        }
+      },
+      "AdminIngredient": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "approved"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "chocolat noir"
+          },
+          "approved": {
+            "type": "boolean",
+            "example": false
+          },
+          "recipesCount": {
+            "type": "integer",
+            "example": 3
+          }
+        }
+      },
+      "AdminNotification": {
+        "type": "object",
+        "required": [
+          "id",
+          "message",
+          "createdAt",
+          "isRead"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "message": {
+            "type": "string",
+            "example": "Nouvelle recette soumise par Marie Dupont"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isRead": {
+            "type": "boolean",
+            "example": false
+          },
+          "recipeId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        }
+      },
+      "AuthUser": {
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "pseudo",
+          "role",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "27273931-fd90-4a0e-9078-f4378c5888d9"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "marie@cinesdelices.fr"
+          },
+          "nom": {
+            "type": "string",
+            "nullable": true,
+            "example": "Dupont"
+          },
+          "pseudo": {
+            "type": "string",
+            "example": "marie.dupont"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "MEMBER",
+              "ADMIN"
+            ],
+            "example": "MEMBER"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-03-26T10:00:00.000Z"
+          }
+        }
+      },
+      "AuthTokenResponse": {
+        "type": "object",
+        "required": [
+          "token",
+          "user"
+        ],
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "JWT d'authentification"
+          },
+          "user": {
+            "$ref": "#/components/schemas/AuthUser"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "Route non trouvee"
+          },
+          "details": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "message": {
+            "type": "string",
+            "example": "Recette introuvable"
+          }
+        }
+      },
+      "ValidationErrorResponse": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "Donnees invalides"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              {
+                "body.email": "Format email invalide"
+              },
+              {
+                "body.password": "Le mot de passe est obligatoire"
+              }
+            ]
+          }
+        }
+      },
+      "Category": {
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Dessert"
+          }
+        }
+      },
+      "IngredientSearchResult": {
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "chocolat noir"
+          },
+          "approved": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "MediaItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "type"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "example": "Matrix"
+          },
+          "slug": {
+            "type": "string",
+            "example": "matrix-1999"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "MOVIE",
+              "SERIES"
+            ],
+            "example": "MOVIE"
+          },
+          "year": {
+            "type": "string",
+            "nullable": true,
+            "example": "1999"
+          },
+          "posterUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "director": {
+            "type": "string",
+            "nullable": true,
+            "example": "Lana Wachowski"
+          },
+          "synopsis": {
+            "type": "string",
+            "nullable": true
+          },
+          "recipesCount": {
+            "type": "integer",
+            "example": 4
+          }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "required": [
+          "page",
+          "limit",
+          "totalItems",
+          "totalPages",
+          "hasNextPage",
+          "hasPreviousPage"
+        ],
+        "properties": {
+          "page": {
+            "type": "integer",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "example": 12
+          },
+          "totalItems": {
+            "type": "integer",
+            "example": 42
+          },
+          "totalPages": {
+            "type": "integer",
+            "example": 4
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "example": true
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "example": false
+          }
+        }
+      },
+      "Ingredient": {
+        "type": "object",
+        "required": [
+          "id",
+          "nom"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "5a4bd70c-3633-4f39-9ae9-c17e42b4b9d7"
+          },
+          "nom": {
+            "type": "string",
+            "example": "chocolat noir"
+          },
+          "approved": {
+            "type": "boolean",
+            "nullable": true,
+            "example": true
+          }
+        }
+      },
+      "RecipeIngredient": {
+        "type": "object",
+        "required": [
+          "ingredient"
+        ],
+        "properties": {
+          "quantity": {
+            "type": "string",
+            "nullable": true,
+            "example": 200
+          },
+          "unit": {
+            "type": "string",
+            "nullable": true,
+            "example": "g"
+          },
+          "ingredient": {
+            "$ref": "#/components/schemas/Ingredient"
+          }
+        }
+      },
+      "RecipeCategory": {
+        "type": "object",
+        "nullable": true,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "7748ec7d-a6de-4b68-9b87-3c6c2e0042ad"
+          },
+          "nom": {
+            "type": "string",
+            "example": "Dessert"
+          }
+        }
+      },
+      "RecipeMedia": {
+        "type": "object",
+        "nullable": true,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "9271aeb2-e9cb-4d75-8c92-6305a4ec5192"
+          },
+          "tmdbId": {
+            "type": "integer",
+            "nullable": true,
+            "example": 603
+          },
+          "titre": {
+            "type": "string",
+            "example": "Matrix"
+          },
+          "slug": {
+            "type": "string",
+            "example": "matrix-2026"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "MOVIE",
+              "SERIES"
+            ],
+            "example": "MOVIE"
+          },
+          "posterUrl": {
+            "type": "string",
+            "nullable": true,
+            "example": "https://image.tmdb.org/t/p/w500/demo.jpg"
+          }
+        }
+      },
+      "RecipeAuthor": {
+        "type": "object",
+        "nullable": true,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "27273931-fd90-4a0e-9078-f4378c5888d9"
+          },
+          "pseudo": {
+            "type": "string",
+            "example": "mariechef"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "marie@cinesdelices.fr"
+          }
+        }
+      },
+      "Recipe": {
+        "type": "object",
+        "required": [
+          "id",
+          "titre",
+          "slug",
+          "instructions",
+          "status",
+          "createdAt",
+          "updatedAt",
+          "ingredients"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "c8ec108e-72ab-40be-af48-e1e86d612f26"
+          },
+          "titre": {
+            "type": "string",
+            "example": "Brownie Matrix"
+          },
+          "slug": {
+            "type": "string",
+            "example": "brownie-matrix"
+          },
+          "imageURL": {
+            "type": "string",
+            "nullable": true,
+            "example": "http://localhost:3000/uploads/recipe-demo.webp"
+          },
+          "instructions": {
+            "type": "string",
+            "example": "Faire fondre le chocolat puis incorporer les oeufs."
+          },
+          "nombrePersonnes": {
+            "type": "integer",
+            "nullable": true,
+            "example": 4
+          },
+          "tempsPreparation": {
+            "type": "integer",
+            "nullable": true,
+            "example": 20
+          },
+          "tempsCuisson": {
+            "type": "integer",
+            "nullable": true,
+            "example": 25
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "PENDING",
+              "PUBLISHED"
+            ],
+            "example": "PUBLISHED"
+          },
+          "rejectionReason": {
+            "type": "string",
+            "nullable": true,
+            "example": "Un ingredient refuse doit etre remplace."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "category": {
+            "$ref": "#/components/schemas/RecipeCategory"
+          },
+          "media": {
+            "$ref": "#/components/schemas/RecipeMedia"
+          },
+          "user": {
+            "$ref": "#/components/schemas/RecipeAuthor"
+          },
+          "ingredients": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecipeIngredient"
+            }
+          }
+        }
+      },
+      "RecipeListResponse": {
+        "type": "object",
+        "required": [
+          "recipes",
+          "pagination"
+        ],
+        "properties": {
+          "recipes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Recipe"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          }
+        }
+      },
+      "RecipeMutationResponse": {
+        "type": "object",
+        "required": [
+          "message",
+          "recipe"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Recette mise a jour"
+          },
+          "recipe": {
+            "$ref": "#/components/schemas/Recipe"
+          }
+        }
+      },
+      "DeleteRecipeResponse": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Recette supprimee"
+          }
+        }
+      },
+      "RecipePayload": {
+        "type": "object",
+        "required": [
+          "titre"
+        ],
+        "properties": {
+          "titre": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 100,
+            "example": "Brownie Matrix"
+          },
+          "instructions": {
+            "type": "string",
+            "description": "Texte complet des instructions. Obligatoire si etapes n'est pas fourni.",
+            "example": "Faire fondre le chocolat puis cuire 25 minutes."
+          },
+          "etapes": {
+            "type": "array",
+            "description": "Liste d'etapes. En multipart, envoyer une chaine JSON.",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "Faire fondre le chocolat",
+              "Ajouter les oeufs",
+              "Cuire 25 minutes"
+            ]
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Identifiant d'une categorie existante."
+          },
+          "categorie": {
+            "type": "string",
+            "description": "Nom de categorie a reutiliser ou creer.",
+            "example": "Dessert"
+          },
+          "mediaId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Identifiant d'un media existant."
+          },
+          "filmId": {
+            "type": "integer",
+            "description": "Identifiant TMDB si mediaId n'est pas fourni.",
+            "example": 603
+          },
+          "film": {
+            "type": "string",
+            "description": "Titre du media si filmId est fourni.",
+            "example": "Matrix"
+          },
+          "type": {
+            "type": "string",
+            "description": "Type du media si filmId est fourni.",
+            "enum": [
+              "F",
+              "S",
+              "movie",
+              "tv",
+              "series"
+            ],
+            "example": "movie"
+          },
+          "nombrePersonnes": {
+            "type": "integer",
+            "example": 4
+          },
+          "nbPersonnes": {
+            "type": "integer",
+            "description": "Alias accepte pour nombrePersonnes.",
+            "example": 4
+          },
+          "tempsPreparation": {
+            "type": "integer",
+            "example": 20
+          },
+          "tempsCuisson": {
+            "type": "integer",
+            "example": 25
+          },
+          "image": {
+            "type": "string",
+            "format": "binary",
+            "description": "Image optionnelle de la recette."
+          },
+          "imageUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL renseignee automatiquement apres upload ou envoyee directement.",
+            "example": "http://localhost:3000/uploads/recipe-demo.webp"
+          },
+          "ingredients": {
+            "type": "array",
+            "description": "Liste des ingredients. En multipart, envoyer une chaine JSON.",
+            "items": {
+              "type": "object",
+              "required": [
+                "nom"
+              ],
+              "properties": {
+                "nom": {
+                  "type": "string",
+                  "example": "chocolat noir"
+                },
+                "quantity": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "nullable": true,
+                  "example": 200
+                },
+                "quantite": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "nullable": true,
+                  "example": 200
+                },
+                "unit": {
+                  "type": "string",
+                  "nullable": true,
+                  "example": "g"
+                },
+                "unite": {
+                  "type": "string",
+                  "nullable": true,
+                  "example": "g"
+                }
+              }
+            }
+          }
+        }
+      },
+      "TmdbErrorResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Erreur serveur lors de la recherche de media"
+          }
+        }
+      },
+      "TmdbMedia": {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "title",
+          "overview"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 603
+          },
+          "type": {
+            "type": "string",
+            "example": "movie"
+          },
+          "title": {
+            "type": "string",
+            "example": "Matrix"
+          },
+          "overview": {
+            "type": "string",
+            "example": "Pas de description"
+          },
+          "poster": {
+            "type": "string",
+            "nullable": true,
+            "example": "https://image.tmdb.org/t/p/w500/demo.jpg"
+          },
+          "year": {
+            "type": "string",
+            "nullable": true,
+            "example": "1999"
+          },
+          "genre": {
+            "type": "string",
+            "nullable": true,
+            "example": "Action, Science-Fiction"
+          },
+          "director": {
+            "type": "string",
+            "nullable": true,
+            "example": "Lana Wachowski"
+          }
+        }
+      },
+      "TmdbPagination": {
+        "type": "object",
+        "required": [
+          "page",
+          "limit",
+          "totalItems",
+          "totalPages",
+          "hasNextPage",
+          "hasPreviousPage"
+        ],
+        "properties": {
+          "page": {
+            "type": "integer",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "example": 15
+          },
+          "totalItems": {
+            "type": "integer",
+            "example": 500
+          },
+          "totalPages": {
+            "type": "integer",
+            "example": 34
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "example": true
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "example": false
+          }
+        }
+      },
+      "TmdbMovieCatalogResponse": {
+        "type": "object",
+        "required": [
+          "movies",
+          "pagination"
+        ],
+        "properties": {
+          "movies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TmdbMedia"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/TmdbPagination"
+          }
+        }
+      },
+      "MemberNotification": {
+        "type": "object",
+        "required": [
+          "id",
+          "message",
+          "createdAt",
+          "isRead"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "message": {
+            "type": "string",
+            "example": "Votre recette Brownie Matrix a ete validee."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isRead": {
+            "type": "boolean",
+            "example": false
+          },
+          "recipeId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Admin - Recipes",
+      "description": "Moderation des recettes cote administration."
+    },
+    {
+      "name": "Admin - Users",
+      "description": "Gestion des utilisateurs cote administration."
+    },
+    {
+      "name": "Admin - Categories",
+      "description": "Gestion des categories cote administration."
+    },
+    {
+      "name": "Admin - Ingredients",
+      "description": "Gestion des ingredients cote administration."
+    },
+    {
+      "name": "Admin - Notifications",
+      "description": "Notifications administrateur."
+    },
+    {
+      "name": "Categories",
+      "description": "Categories de recettes (lecture publique, ecriture admin)."
+    },
+    {
+      "name": "Contact",
+      "description": "Formulaire de contact."
+    },
+    {
+      "name": "Ingredients",
+      "description": "Recherche et creation d'ingredients (membres)."
+    },
+    {
+      "name": "Media",
+      "description": "Catalogue films et series associes aux recettes."
+    },
+    {
+      "name": "TMDB - Search",
+      "description": "Recherche de medias via TMDB."
+    },
+    {
+      "name": "TMDB - Catalog",
+      "description": "Consultation du catalogue medias TMDB."
+    },
+    {
+      "name": "Users",
+      "description": "Espace membre — profil et recettes personnelles."
+    }
+  ]
+}
