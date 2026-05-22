@@ -121,6 +121,7 @@ class Media <<model>> {
   + synopsis : Text?
   + annee : Int?
   + realisateur : String?
+  + createdAt : DateTime
 }
 note right of Media : unique (tmdbId, type)
 

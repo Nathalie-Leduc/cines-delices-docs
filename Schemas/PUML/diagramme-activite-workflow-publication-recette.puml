@@ -1,16 +1,14 @@
-# ╔══════════════════════════════════════════════════════════╗
-# ║  9. PlantUML — Diagramme d'activité                      ║
-# ╚══════════════════════════════════════════════════════════╝
-
----PLANTUML_ACTIVITE---
 @startuml Activite_Publication
-skinparam backgroundColor #F6F1E8
+skinparam backgroundColor #FFFFFF
 skinparam activityBackgroundColor #FFFBEF
 skinparam activityBorderColor #C9A45C
+skinparam activityFontSize 14
 
 skinparam activityDiamondBackgroundColor #FFFBEF
 skinparam activityDiamondBorderColor #8E1F2F
 skinparam activityDiamondFontColor #8E1F2F
+skinparam activityDiamondFontStyle bold
+skinparam activityDiamondFontSize 14
 
 skinparam arrowColor #8E1F2F
 title Activité — Workflow de publication d'une recette
@@ -67,12 +65,10 @@ legend right
   <b>Légende</b>
   |= Symbole            |= Signification                    |
   | <color:#000000>⬤</color> Disque plein  | <b>start</b> — début du flux       |
-  | <color:#8E1F2F>◉</color> Disque cerclé | <b>stop</b> — fin du flux          |
+  | <color:#000000>◉</color> Disque cerclé | <b>stop</b> — fin du flux          |
   | <color:#8E1F2F>◇</color> Losange       | <b>if</b> — décision / branchement |
-  | <color:#C9A45C>▏</color> Barre         | Swimlane — séparation des acteurs  |
+  | <color:#000000>▏</color> Barre         | Swimlane — séparation des acteurs  |
   | <color:#8E1F2F>→</color> Flèche        | Transition entre activités         |
 endlegend
 
 @enduml
-
----FIN_PLANTUML_ACTIVITE---

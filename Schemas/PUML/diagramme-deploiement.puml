@@ -1,9 +1,3 @@
-
-# ╔══════════════════════════════════════════════════════════╗
-# ║ 10. PlantUML — Diagramme de déploiement                 ║
-# ╚══════════════════════════════════════════════════════════╝
-
----PLANTUML_DEPLOIEMENT---
 @startuml Deploiement_CinesDelices
 
 skinparam backgroundColor #F6F1E8
@@ -23,18 +17,18 @@ skinparam cloudBorderColor #3A8A9A
 
 title Diagramme de Deploiement -- Cines Delices
 
-' ── Poste developpeur ─────────────────────────────────────
+' ══════════════════════════════════════════════════════════
+' DEV LOCAL  (Docker Compose : node:24-alpine + postgres:18)
+' ══════════════════════════════════════════════════════════
 node "Poste Developpeur" <<machine locale>> {
 
   package "Docker Compose" {
     node "Container : api\n(node:24-alpine)" <<Docker>> {
       artifact "Node.js 24\nExpress 5\nPrisma 7" as API_ART
     }
-
     node "Container : client\n(node:24-alpine)" <<Docker>> {
       artifact "React 19\nVite 6\nSCSS" as CLIENT_ART
     }
-
     node "Container : db\n(postgres:18-alpine)" <<Docker>> {
       database "PostgreSQL 18\ncinesdelices" as DB_LOCAL
     }
@@ -45,63 +39,89 @@ node "Poste Developpeur" <<machine locale>> {
     Swagger : /api-docs
     Health  : /api/health
   end note
-
   note right of CLIENT_ART
     http://localhost:5173
     HMR Vite actif
   end note
 }
 
-' ── GitHub ────────────────────────────────────────────────
+' ══════════════════════════════════════════════════════════
+' GITHUB
+' ══════════════════════════════════════════════════════════
 node "GitHub" <<depot distant>> {
   artifact "Repository\ncines-delices\n(main + develop\n+ feature/*)" as REPO
 }
 
-' ── Railway Production ────────────────────────────────────
+' ══════════════════════════════════════════════════════════
+' RAILWAY PROD  ->  3 SERVICES : Frontend + API + PostgreSQL
+' ══════════════════════════════════════════════════════════
 node "Railway" <<PaaS cloud>> {
 
+  ' --- NOUVEAU : le service Frontend manquait ---
+  node "Service : Frontend" <<Railway Service>> {
+    artifact "Build statique React 19 / Vite 6\nservi par 'npx serve dist'\n(Nixpacks, Node 18)" as FRONT_PROD
+  }
+
+  ' --- CORRIGE : Node 22 via Dockerfile, plus Node 24 ---
   node "Service : API" <<Railway Service>> {
-    artifact "Node.js 24\nExpress 5\nPrisma 7\n(build prod)" as API_PROD
+    artifact "Dockerfile node:22-slim\nExpress 5 / Prisma 7\n+ openssl + prisma generate\nEXPOSE 8080" as API_PROD
   }
 
   node "Service : PostgreSQL" <<Railway Service>> {
-    database "PostgreSQL 18\n(Railway DB)\nVariables env\nsecurisees" as DB_PROD
+    database "PostgreSQL 18\n(managee Railway)" as DB_PROD
   }
 
-  note right of API_PROD
-    https://cines-delices.railway.app
+  note bottom of FRONT_PROD
+    https://graceful-quietude-production.up.railway.app
+    VITE_API_URL injectee au BUILD
+  end note
+  note bottom of API_PROD
+    https://cines-delicesapi-production.up.railway.app
     Variables d'env :
-    DATABASE_URL
-    JWT_SECRET
-    TMDB_API_KEY
-    SMTP_*
+    DATABASE_URL / JWT_SECRET / JWT_EXPIRES_IN
+    TMDB_API_KEY / API_BASE_URL
+    CLIENT_URL (CORS) / NODE_ENV=production (SSL)
+    MAILTRAP_* (emails)
+  end note
+  note bottom of DB_PROD
+    Reseau interne : postgres.railway.internal:5432
+    URL publique proxy reservee au CI GitHub Actions
   end note
 }
 
-' ── TMDB API externe ──────────────────────────────────────
+' ══════════════════════════════════════════════════════════
+' SERVICES EXTERNES
+' ══════════════════════════════════════════════════════════
 cloud "TMDB API\n(externe)" <<api.themoviedb.org>> {
   artifact "REST API v3\n/search/multi\n/movie/:id\n/tv/:id" as TMDB
 }
-
-' ── Navigateur utilisateur ────────────────────────────────
-node "Navigateur\nUtilisateur" <<client>> {
-  artifact "SPA React 19\n(fichiers statiques\nservis par Railway)" as SPA
+cloud "Email SMTP\n(externe)" <<Mailtrap / Brevo>> {
+  artifact "Nodemailer\nMailtrap (dev)\nBrevo (prod)" as EMAIL
 }
 
-' ── Relations developpement ───────────────────────────────
-API_ART    --> DB_LOCAL   : Prisma ORM\n(SQL/TCP)
-CLIENT_ART --> API_ART    : HTTP/JSON\nlocalhost:3000
+' ══════════════════════════════════════════════════════════
+' NAVIGATEUR
+' ══════════════════════════════════════════════════════════
+node "Navigateur\nUtilisateur" <<client>> {
+  artifact "SPA React 19\n(executee dans le navigateur)" as SPA
+}
 
-' ── CI/CD ─────────────────────────────────────────────────
-REPO --> API_PROD  : push GitHub\n→ webhook Railway\n(deploy auto)
+' ── Relations DEV LOCAL ───────────────────────────────────
+API_ART    --> DB_LOCAL : Prisma ORM\n(SQL/TCP)
+CLIENT_ART --> API_ART  : HTTP/JSON\nlocalhost:3000
 
-' ── Relations production ─────────────────────────────────
-API_PROD --> DB_PROD  : Prisma ORM\n(SSL/TCP)
-API_PROD --> TMDB     : HTTPS GET\n(node-cache TTL)
-SPA      --> API_PROD : HTTPS/JSON\nBearer JWT
+' ── DEV -> GitHub ─────────────────────────────────────────
+API_ART --> REPO : git push\nfeature/* -> develop -> main
 
-' ── Dev vers GitHub ──────────────────────────────────────
-API_ART    --> REPO : git push\nfeature/* -> develop -> main
-CLIENT_ART --> REPO : git push
+' ── CI/CD : push main -> webhook -> deploy auto ───────────
+REPO --> FRONT_PROD : webhook Railway\n(deploy auto)
+REPO --> API_PROD   : webhook Railway\n(deploy auto)
+
+' ── Relations PRODUCTION ──────────────────────────────────
+SPA      --> FRONT_PROD : HTTPS\n(charge la SPA)
+SPA      --> API_PROD   : HTTPS/JSON\nBearer JWT
+API_PROD --> DB_PROD    : Prisma ORM\n(SSL/TCP)
+API_PROD --> TMDB       : HTTPS GET\n(node-cache TTL)
+API_PROD --> EMAIL      : SMTP\n(Nodemailer)
 
 @enduml

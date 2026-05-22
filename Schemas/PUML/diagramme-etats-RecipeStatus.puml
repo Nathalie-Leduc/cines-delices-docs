@@ -1,18 +1,22 @@
-# ╔══════════════════════════════════════════════════════════╗
-# ║  8. PlantUML — Diagramme d'états (RecipeStatus)          ║
-# ╚══════════════════════════════════════════════════════════╝
-
----PLANTUML_ETATS---
 @startuml Etats_RecipeStatus
-skinparam backgroundColor #F6F1E8
+skinparam backgroundColor #FFFFFF
 skinparam stateBackgroundColor #FFFBEF
 skinparam stateBorderColor #C9A45C
 skinparam arrowColor #8E1F2F
 skinparam noteBackgroundColor #FFFBEF
 title États d'une recette — RecipeStatus
 
-[*] --> DRAFT : Membre crée\nPOST /api/recipes
+' ─────────────────────────────────────────────
+' POINT DE DÉPART (start)
+' ─────────────────────────────────────────────
+[*] -> DRAFT : Membre crée\nPOST /api/recipes
 
+' ─────────────────────────────────────────────
+' LES 3 ÉTATS de l'enum RecipeStatus.
+' PUBLISHED est un ÉTAT comme les autres : une
+' recette publiée y reste et peut encore être
+' modifiée ou supprimée.
+' ─────────────────────────────────────────────
 state DRAFT {
   DRAFT : Brouillon personnel
   DRAFT : Visible uniquement\npar le propriétaire et les admins
@@ -27,19 +31,53 @@ state PUBLISHED {
   PUBLISHED : userId peut être NULL\n(SetNull si compte supprimé)
 }
 
-DRAFT --> DRAFT     : Membre modifie\nPATCH /api/recipes/:id
-DRAFT --> PENDING   : Membre soumet\nPATCH /api/recipes/:id/submit
-PENDING --> PUBLISHED : Admin publie\nPATCH /api/admin/recipes/:id/publish
-PENDING --> DRAFT   : Admin refuse\n+ rejectionReason\nPATCH .../reject
-PUBLISHED --> DRAFT : Admin dépublie\n(si nécessaire)
-DRAFT --> [*]       : Membre supprime\nDELETE /api/recipes/:id
-PUBLISHED --> [*]   : Admin supprime\nDELETE /api/admin/recipes/:id
+' ─────────────────────────────────────────────
+' LES DEUX STOPS, nommés via <<end>>.
+' Le seul événement terminal est la SUPPRESSION,
+' mais on distingue deux fins selon l'état d'où
+' part la recette.
+' ─────────────────────────────────────────────
+state "Supprimée" as DELETED <<end>>
+state "Retirée du catalogue" as UNPUBLISHED <<end>>
 
+' Étiquettes (garanties sur toutes les versions de PlantUML)
+note left of DELETED
+  <b>Supprimée</b>
+  Recette jamais publiée
+  (brouillon ou en attente).
+end note
+note right of UNPUBLISHED
+  <b>Retirée du catalogue</b>
+  Recette qui était publiée.
+  Déclenche le SetNull.
+end note
+
+' ─────────────────────────────────────────────
+' TRANSITIONS entre états
+' ─────────────────────────────────────────────
+DRAFT --> DRAFT       : Membre modifie\nPATCH /api/recipes/:id
+DRAFT ---> PENDING    : Membre soumet\nPATCH /api/recipes/:id/submit
+PENDING --> DRAFT     : Admin refuse\n+ rejectionReason\nPATCH .../reject
+PENDING ---> PUBLISHED : Admin publie\nPATCH /api/admin/recipes/:id/publish
+
+' ── Stop n°1 : suppression AVANT publication ──
+DRAFT --> DELETED     : Membre supprime\nDELETE /api/recipes/:id
+PENDING --> DELETED   : Admin supprime\n+ deleteReason\nDELETE /api/admin/recipe/:id
+
+' ── Stop n°2 : suppression d'une recette PUBLIÉE ──
+PUBLISHED --> UNPUBLISHED : Admin supprime\nDELETE /api/admin/recipes/:id
+
+' ─────────────────────────────────────────────
 note right of PENDING
   Côté front : badge
   de comptage dans la
   sidebar admin.
 end note
-@enduml
 
----FIN_PLANTUML_ETATS---
+legend right
+  <b>Légende</b>
+  | <color:#000000>⬤</color> Disque plein  | <b>start</b> — début du flux            |
+  | <color:#000000>◉</color> Disque cerclé | <b>stop</b> — fin du flux (2 distincts) |
+  | <color:#8E1F2F>→</color> Flèche        | Transition entre activités              |
+endlegend
+@enduml
