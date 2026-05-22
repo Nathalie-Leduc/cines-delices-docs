@@ -1,0 +1,83 @@
+@startuml UC_Membre
+'======================================================================
+'  Cinés Délices — Diagramme de cas d'utilisation 2/3
+'  Acteur : Membre connecté (UC10 -> UC18)
+'  Fichier reconstitué à partir de UC_Membre-horizontal.png
+'======================================================================
+
+'--- APPARENCE (identique au fichier 1 pour rester cohérent) ----------
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam usecase {
+  BackgroundColor black
+  FontColor      white
+  FontStyle      bold
+  BorderColor    black
+}
+skinparam actor {
+  BorderColor #780606
+  BackgroundColor #780606
+  FontStyle italic
+  FontSize 14
+}
+
+
+skinparam packageStyle rectangle
+
+title Use Cases 2/3 — Membre Connecté · Cinés Délices
+
+'--- LES ACTEURS ET LEUR HÉRITAGE -------------------------------------
+' On déclare AUSSI le visiteur, car le membre HÉRITE de ses droits.
+actor "Visiteur\nanonyme" as visiteur
+actor "Membre\nconnecté"  as membre
+
+' Analogie : l'héritage "--|>" se lit comme "EST UN".
+' Un membre connecté EST UN visiteur (avec des pouvoirs en plus) :
+' il peut donc tout faire ce que fait le visiteur, sans le redessiner.
+' Le triangle creux pointe vers le "parent" (le visiteur).
+visiteur <|-- membre
+
+'--- LE PÉRIMÈTRE DU SYSTÈME ------------------------------------------
+' Espace réservé : il faut un JWT valide pour entrer ici.
+rectangle "Cinés Délices — Espace membre (JWT requis)" {
+
+  usecase "UC10\nVoir mes recettes"            as UC10
+  usecase "UC11\nCréer une recette"            as UC11
+  usecase "UC12\nModifier ma recette"          as UC12
+  usecase "UC13\nSoumettre pour\npublication"  as UC13
+  usecase "UC14\nSupprimer ma\nrecette en\nDRAFT"         as UC14
+  usecase "UC15\nGérer mon profil"             as UC15
+  usecase "UC16\nVoir mes\nnotifications"       as UC16
+  usecase "UC17\nSe déconnecter"               as UC17
+ 
+  ' Cas "réutilisables" appelés par d'autres via «include»
+  usecase "UC18\nRechercher un\nmédia TMDB\n(autocomplétion)"   as UC18
+}
+
+'--- ASSOCIATIONS acteur <-> cas --------------------------------------
+membre -- UC10
+membre -- UC11
+membre -- UC12
+membre -- UC13
+membre -- UC14
+membre -- UC15
+membre -- UC16
+membre -- UC17
+
+'--- RELATIONS «include» ----------------------------------------------
+' Différence clé avec «extend» :
+'   - «include» = OBLIGATOIRE et systématique. Analogie : une recette de
+'     cuisine qui dit "voir la sous-recette de la pâte" — tu DOIS toujours
+'     l'exécuter. Le cas de base APPELLE le cas inclus.
+'   - «extend»  = OPTIONNEL (cf. fichier 1).
+' La flèche pointillée part du cas qui APPELLE vers le cas réutilisé.
+'
+' Reconstitution depuis le PNG (4 relations «include» visibles) :
+UC11 ..> UC18  : «include»
+UC12 ..> UC18  : «include»
+
+
+
+
+
+@enduml

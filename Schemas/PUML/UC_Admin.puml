@@ -1,0 +1,52 @@
+@startuml UC_Admin
+' ─────────────────────────────────────────────────────────────
+' Use Cases 3/3 — Administrateur · Cinés Délices
+' Hérite de Membre (tous ses UCs restent accessibles)
+' ─────────────────────────────────────────────────────────────
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam usecase {
+  BackgroundColor black
+  FontColor      white
+  FontStyle      bold
+  BorderColor    black
+}
+skinparam actor {
+  BorderColor #780606
+  BackgroundColor #780606
+  FontStyle italic
+  FontSize 14
+}
+
+
+skinparam packageStyle rectangle
+title Use Cases 3/3 — Administrateur · Cinés Délices
+
+actor "Membre\nconnecté" as M
+actor "Administrateur" as A
+M <|-- A
+
+rectangle "Cinés Délices — Back-office (JWT + rôle ADMIN)" {
+  usecase "UC20\nValider les recettes\nPENDING" as UC20
+  usecase "UC21\nGérer toutes\nles recettes" as UC21
+  usecase "UC22\nValider les ingrédients\nen attente" as UC22
+  usecase "Fusionner les\ningrédients doublons" as FUSION
+  usecase "UC23\nGérer les\ncatégories" as UC23
+  usecase "UC24\nGérer les\nutilisateurs" as UC24
+  usecase "UC25\nGérer les\nnotifications" as UC25
+}
+
+A --- UC20
+A --- UC21
+A --- UC22
+A --- UC23
+A --- UC24
+A --- UC25
+
+UC22 ..> FUSION : <<extend>>
+
+
+
+@enduml
+

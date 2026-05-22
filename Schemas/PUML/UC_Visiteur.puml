@@ -1,0 +1,82 @@
+@startuml UC_Visiteur
+'======================================================================
+'  Cinés Délices — Diagramme de cas d'utilisation 1/3
+'  Acteur : Visiteur anonyme (UC01 -> UC09)
+'  Fichier reconstitué à partir de UC_Visiteur-horizontal.png
+'----------------------------------------------------------------------
+'  Rappel de syntaxe (tu apprends, donc on commente tout) :
+'    - une apostrophe = commentaire sur une ligne
+'    - /' ... '/      = commentaire sur plusieurs lignes
+'    - "alias"        = nom court qu'on réutilise pour relier les éléments
+'======================================================================
+
+'--- APPARENCE (skinparam) --------------------------------------------
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam usecase {
+  BackgroundColor black
+  FontColor      white
+  FontStyle      bold
+  BorderColor    black
+}
+skinparam actor {
+  BorderColor #780606
+  BackgroundColor #780606
+  FontStyle italic
+  FontSize 14
+}
+
+
+skinparam packageStyle rectangle
+
+title Use Cases 1/3 — Visiteur Anonyme · Cinés Délices
+
+'--- L'ACTEUR ----------------------------------------------------------
+' Le \n force un retour à la ligne dans l'étiquette.
+actor "Visiteur\nanonyme" as visiteur
+
+'--- LE PÉRIMÈTRE DU SYSTÈME (rectangle) ------------------------------
+' Tout ce qui est DANS ce rectangle = l'espace public, donc accessible
+' sans aucune connexion.
+rectangle "Cinés Délices — Espace public" {
+
+  ' Les 9 cas d'utilisation principaux du visiteur
+  usecase "UC01\nVoir la page\nd'accueil"                as UC01
+  usecase "UC02\nConsulter le\ncatalogue des\nrecettes"  as UC02
+  usecase "UC03\nConsulter le\ndétail d'une\nrecette"     as UC03
+  usecase "UC04\nConsulter le\ncatalogue des\nfilms"      as UC04
+  usecase "UC05\nConsulter le\ncatalogue des\nséries"     as UC05
+  usecase "UC06\nS'inscrire"                             as UC06
+  usecase "UC07\nSe connecter"                           as UC07
+  usecase "UC08\nRéinitialiser son\nmot de passe"        as UC08
+  usecase "UC09\nContacter\nl'équipe"                     as UC09
+}
+
+'--- ASSOCIATIONS acteur <-> cas d'utilisation ------------------------
+' Un simple trait "--" = "le visiteur PEUT déclencher ce cas".
+visiteur --- UC01
+visiteur -- UC02
+visiteur -- UC03
+visiteur -- UC04
+visiteur -- UC05
+visiteur -- UC06
+visiteur -- UC07
+visiteur -- UC08
+visiteur -- UC09
+
+
+
+'--- RELATIONS «extend» -----------------------------------------------
+' Analogie : «extend» = une OPTION sur une voiture. Le cas de base
+' marche très bien sans (consulter le catalogue), mais dans certaines
+' conditions un comportement optionnel vient s'y greffer (recherche
+' temps réel). La flèche en pointillés pointe VERS le cas de base.
+
+
+
+
+
+
+
+@enduml
+
