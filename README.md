@@ -15,11 +15,12 @@ Le code source de l'application reste dans le dépôt principal — ici on trouv
 | [`Documentations/`](./Documentations/) | Documents complémentaires : recaps, guide tarteaucitron, routes Frontend/Backend, stack technique | Annexes 1, 2, 13 |
 | [`Déploiement/`](./D%C3%A9ploiement/) | Caddyfile, Dockerfile, workflow CI/CD GitHub Actions | Annexe 16 |
 | [`Emails/`](./Emails/) | Captures Mailtrap des 4 emails RGPD (desktop + mobile) | Annexe 13, Annexe 15 |
-| [`Gestion-de-projet/`](./Gestion-de-projet/) | Kanban GitHub (TSV exportés), planning Apothéose, planning Sprint 2 | Annexe 3 |
+| [`Gestion-projet/`](./Gestion-projet/) | Kanban GitHub (TSV exportés), planning Apothéose, planning Sprint 2 | Annexe 3 |
 | [`Jeu-essai/`](./Jeu-essai/) | Captures du jeu d'essai T01 → T10 | Annexe 15 |
 | [`Logo-cines-delices/`](./Logo-cines-delices/) | Logo officiel (PNG + WebP) | Annexe 7 |
 | [`Maquettes/`](./Maquettes/) | 16 maquettes haute-fidélité (HTML interactif + PNG individuels) | Annexe 9 |
 | [`Prisma/`](./Prisma/) | Schéma Prisma + migrations + seeds | Annexe 6 |
+| [`Charte-Graphique/`](./Charte-graphique/) | Charte graphique complète : palette de couleurs, typographies (Playfair Display + Inter), iconographie, composants UI (boutons, cartes, hero) et logo | Annexe 7 |
 | [`Schemas/`](./Schemas/) | Diagrammes UML — sources PUML + rendus PNG (use cases, classes, séquences, packages, composants, déploiement) | Annexes 1, 4, 5 |
 | [`Swagger/`](./Swagger/) | Spécification OpenAPI 3.0 (`swagger.json`) + capture de l'UI | Annexe 2 |
 | [`Tests/`](./Tests/) | Tests API (`.http` + `.js`) et tests client (Vitest) | Annexe 14 |
