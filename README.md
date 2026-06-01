@@ -33,7 +33,11 @@ Le code source de l'application reste dans le dépôt principal — ici on trouv
 |---|---|
 | **Front (React)** | https://graceful-quietude-production.up.railway.app |
 | **API (Node/Express)** | https://cines-delicesapi-production.up.railway.app |
-| **Swagger UI** | https://cines-delicesapi-production.up.railway.app/api/docs |
+| **Swagger UI** | https://cines-delicesapi-production.up.railway.app/api/doc?key=SWAGGER_API_KEY |
+
+(Swagger — protégé par clé en production)
+Pour tester l'API via Swagger : accéder à l'URL Swagger avec la clé fournie → 
+
 
 ### Comptes de test (seed v-4)
 
