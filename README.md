@@ -10,7 +10,7 @@ Le code source de l'application reste dans le dépôt principal — ici on trouv
 
 | Dossier / fichier | Contenu | Annexe(s) liée(s) |
 |---|---|---|
-| [`DOSSIER DE PROJET/`](./DOSSIER%20DE%20PROJET/) | Dossier de projet complet (corps + 17 annexes) au format Word | — |
+| [`DOSSIER DE PROJET/`](./DOSSIER%20DE%20PROJET/) | Dossier de projet complet (corps + 17 annexes) au format Word et Pdf | — |
 | [`Captures-ecran/`](./Captures-ecran/) | Captures de l'application — desktop, mobile, parcours création de recette | Annexe 9, Annexe 17 |
 | [`Documentations/`](./Documentations/) | Documents complémentaires : recaps, guide tarteaucitron, use-case, routes Frontend/Backend, stack technique | Annexes 1, 2, 4, 13 |
 | [`Déploiement/`](./D%C3%A9ploiement/) | Caddyfile, Dockerfile, workflow CI/CD GitHub Actions | Annexe 16 |
