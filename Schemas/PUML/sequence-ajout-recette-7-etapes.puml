@@ -1,0 +1,105 @@
+@startuml Sequence_AjoutRecette
+' ─────────────────────────────────────────────────────────────
+' Séquence — Ajout d'une recette (membre connecté)
+' v3 : 7 étapes exactes du dossier de projet
+' 1 Saisie · 2 Envoi · 3 authMiddleware · 4 Pipeline image
+' 5 Validation Zod · 6 Controller createRecipe · 7 Réponse 201
+' ─────────────────────────────────────────────────────────────
+skinparam backgroundColor #F6F1E8
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 14
+skinparam sequenceMessageAlign center
+skinparam sequence {
+  ArrowColor #8E1F2F
+  ArrowFontSize 13
+  LifeLineBorderColor #4A3428
+  LifeLineBackgroundColor #F3E9D2
+  ParticipantBorderColor #4A3428
+  ParticipantBackgroundColor #FFFBEF
+  ParticipantFontSize 13
+  ParticipantFontStyle bold
+  ParticipantPadding 25
+  BoxBorderColor #4A3428
+  GroupBorderColor #4A3428
+  GroupBackgroundColor #F3E9D2
+  GroupHeaderFontStyle bold
+  DividerBackgroundColor #C9A45C
+  DividerFontColor #1F1D1E
+  DividerFontStyle bold
+  DividerFontSize 14
+}
+skinparam actor {
+  BorderColor #4A3428
+  BackgroundColor #F6F1E8
+  FontSize 13
+  FontStyle italic
+}
+skinparam note {
+  BackgroundColor #FFFBEF
+  BorderColor #C9A45C
+  FontSize 12
+}
+skinparam database {
+  BackgroundColor #D8E8D0
+  BorderColor #4A3428
+}
+
+title Séquence — Ajout d'une recette (membre connecté)
+
+actor       "Membre"                            as U
+participant "React 19\n(Frontend)"              as F
+participant "Express 5\n(Router)"               as API
+participant "Middleware\nJWT"                   as JWT
+participant "Multer + Sharp\n(Upload → WebP)"   as IMG
+participant "Zod 4\n(Validator)"                as ZOD
+participant "createRecipe\n(Controller)"        as CTRL
+database    "PostgreSQL 18\n(Prisma 7)"         as DB
+
+== 1 · Saisie du formulaire ==
+U  -> F   : Remplit titre, catégorie,\nfilm TMDB, ingrédients, photo
+F  -> F   : Validation côté client\n(champs requis, taille photo)
+
+== 2 · Envoi POST multipart/form-data ==
+F  -> API : POST /api/recipes\nContent-Type: multipart/form-data\nAuthorization: Bearer JWT
+
+== 3 · authMiddleware — vérification JWT ==
+API -> JWT : Vérification signature HS256
+alt JWT invalide ou expiré
+  JWT --> API : 401 Unauthorized
+  API --> F   : error: Non authentifié
+  F   --> U   : Message d'erreur
+else JWT valide
+  JWT --> API : userId + role extraits\n→ req.user injecté
+end
+
+== 4 · Pipeline image (Multer + Sharp) ==
+API -> IMG : Multer reçoit le buffer\n(memoryStorage — pas d'écriture disque)
+IMG -> IMG : Sharp convertit en WebP\nresize max 1200×1200 · qualité 80\n→ −70% poids
+IMG --> API : imageUrl: /uploads/recipes/xxx.webp
+
+== 5 · Validation Zod ==
+API -> ZOD : validate(createRecipeSchema)\npayload complet incl. imageUrl
+alt Données invalides
+  ZOD --> API : 400 — erreurs par champ
+  API --> F   : { errors: [...] }
+  F   --> U   : Affiche les erreurs inline
+else Données valides
+  ZOD --> API : données nettoyées et typées
+end
+
+== 6 · Controller createRecipe ==
+API -> CTRL : données validées + req.user.id + imageUrl
+CTRL -> CTRL : Génère slug unique\n(titre → kebab-case + nanoid)
+CTRL -> DB   : findOrCreate(ingredients)\nnormalisation trim + lowercase
+DB   --> CTRL : ingredientIds[ ]
+CTRL -> DB   : prisma.recipe.create(\n  titre, slug, imageUrl,\n  userId, categoryId, mediaId,\n  status: DRAFT)
+DB   --> CTRL : recipe { id, slug }
+CTRL -> DB   : prisma.recipeIngredient.createMany(\n  [{ recipeId, ingredientId, qty, unit }])
+DB   --> CTRL : OK
+
+== 7 · Réponse 201 ==
+CTRL --> API : recipe { id, slug, status: DRAFT }
+API  --> F   : 201 Created\n{ data: { id, slug, status: DRAFT } }
+F    --> U   : Redirect /membre/mes-recettes\n✅ Recette enregistrée en brouillon
+
+@enduml
